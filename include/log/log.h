@@ -19,6 +19,7 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
+#include "clock.h"
 #include "fmt/format.h"
 #include "native/process.h"
 #include "singleton.h"
@@ -31,7 +32,7 @@
 #define LOG_FATAL(...) enigma::log::fatal(__FILE__, __LINE__, __VA_ARGS__)
 
 namespace enigma::log {
-	bool init_logger(const log_level lvl, std::vector<sink::ptr>&& sinks, formatter&& formatter = nullptr);
+	bool init_logger(const log_level lvl, std::vector<sink::ptr>&& sinks);
 	void uninit_logger();
 	void log_it(message&& msg);
 
@@ -44,7 +45,6 @@ namespace enigma::log {
 	*/
 	template <typename... Args>
 	void log_debug(const char* format, Args&&... args) {
-
 		auto s = fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
 		log_it(
 			message(log_level::debug, time(NULL), native::process::get_current_thread_id(), nullptr, 0, std::move(s)));

@@ -2,7 +2,8 @@
 #include <filesystem>
 #include <map>
 #include <regex>
-#include "default_formatter.h"
+
+#include "fmt/chrono.h"
 #include "fmt/format.h"
 
 namespace enigma::log {
@@ -25,11 +26,27 @@ namespace enigma::log {
 		if (!file_ || !file_->is_open()) return false;
 		if (static_cast<int>(msg.level()) < static_cast<int>(lvl)) return true;
 
-		std::string prefix, log;
-		if (config_.fmt) prefix = config_.fmt(msg.level(), msg.timestamp(), msg.thread(), msg.file(), msg.line());
-		else prefix = default_formatter()(msg.level(), msg.timestamp(), msg.thread(), msg.file(), msg.line());
-		log = fmt::format("{} {}", prefix, msg.content());
-
+		std::string lvl_str;
+		switch (msg.level()) {
+			case log_level::debug:
+				lvl_str = "DEBUG";
+				break;
+			case log_level::info:
+				lvl_str = "INFO";
+				break;
+			case log_level::warn:
+				lvl_str = "WARN";
+				break;
+			case log_level::error:
+				lvl_str = "ERROR";
+				break;
+			case log_level::fatal:
+				lvl_str = "FATAL";
+				break;
+		}
+		auto timestamp = fmt::format("{:%m-%d %H:%M:%S}", fmt::localtime(msg.timestamp()));
+		auto log	   = fmt::format("{}.{:03} [{}] [{}]> {}", timestamp, msg.timestamp() % 1000, msg.thread(), lvl_str,
+									 msg.content());
 		file_->write(log);
 		if (!config_.max_file_size || file_->size() < config_.max_file_size) return true;
 		file_->close();

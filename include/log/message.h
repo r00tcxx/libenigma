@@ -25,9 +25,6 @@
 namespace enigma::log {
 	enum class log_level : int { debug, info, warn, error, fatal };
 
-	using formatter = func<string(const log_level /*lvl*/, const u64 /*time*/, const u64 /*thread*/,
-								  const char* /*file*/, const int /*line*/)>;
-
 	class message : public no_cmable {
 	   public:
 		message(const log_level lvl, const u64 time, const u64 thread, const char* file, const int line,
@@ -46,12 +43,12 @@ namespace enigma::log {
 			return *this;
 		}
 
-		log_level level() const { return lvl_; }
-		u64 timestamp() const { return time_; }
-		u64 thread() const { return thread_; }
-		const string& content() const { return msg_; }
-		const char* file() const { return file_; }
-		int line() const { return line_; }
+		inline log_level level() const { return lvl_; }
+		inline u64 timestamp() const { return time_; }
+		inline u64 thread() const { return thread_; }
+		inline const string& content() const { return msg_; }
+		inline const char* file() const { return file_; }
+		inline int line() const { return line_; }
 
 	   private:
 		log_level lvl_;

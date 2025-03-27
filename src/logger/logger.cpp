@@ -3,8 +3,8 @@
 #include "console_sink.h"
 
 namespace enigma::log {
-	bool init_logger(const log_level lvl, std::vector<sink::ptr>&& sinks, formatter&& formatter) {
-		return logger::instance().init(lvl, std::move(sinks), std::move(formatter));
+	bool init_logger(const log_level lvl, std::vector<sink::ptr>&& sinks) {
+		return logger::instance().init(lvl, std::move(sinks));
 	}
 
 	void uninit_logger() {
@@ -23,10 +23,9 @@ namespace enigma::log {
 		return std::make_unique<console_sink>(std::move(config));
 	}
 
-	bool logger::init(const log_level lvl, std::vector<sink::ptr>&& sinks, formatter&& formatter) {
+	bool logger::init(const log_level lvl, std::vector<sink::ptr>&& sinks) {
 		if (sinks.empty()) return false;
 		sinks_	   = std::move(sinks);
-		formatter_ = std::move(formatter);
 		lvl_	   = lvl;
 
 		bool all_success{true};

@@ -1,6 +1,7 @@
 #include "console_sink.h"
 #include <iostream>
-#include "default_formatter.h"
+#include "fmt/chrono.h"
+#include "fmt/format.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -42,39 +43,35 @@ namespace enigma::log {
 	bool console_sink::log(const log_level lvl, const message& msg) {
 		if (static_cast<int>(msg.level()) < static_cast<int>(lvl)) return true;
 
-		std::string prefix, log;
-		if (config_.fmt) prefix = config_.fmt(msg.level(), msg.timestamp(), msg.thread(), msg.file(), msg.line());
-		else prefix = default_formatter()(msg.level(), msg.timestamp(), msg.thread(), msg.file(), msg.line());
-		log = fmt::format("{} {}", prefix, msg.content());
-		if (config_.color) {
+		auto timestamp = fmt::format("{:%m-%d %H:%M:%S}", fmt::localtime(msg.timestamp()));
+		auto prefix	   = fmt::format("{}.{:03} [{}]", timestamp, msg.timestamp() % 1000, msg.thread());
 #ifdef _WIN32
-			switch (msg.level()) {
-				case log_level::debug:
-					SetConsoleTextAttribute(std_handle, (WORD)color::green);
-					std::cout << log << std::endl;
-					break;
-				case log_level::info:
-					SetConsoleTextAttribute(std_handle, (WORD)color::white);
-					std::cout << log << std::endl;
-					break;
-				case log_level::warn:
-					SetConsoleTextAttribute(std_handle, (WORD)color::yellow);
-					std::cout << log << std::endl;
-					break;
-				case log_level::error:
-					SetConsoleTextAttribute(std_handle, (WORD)color::red);
-					std::cout << log << std::endl;
-					break;
-				case log_level::fatal:
-					SetConsoleTextAttribute(std_handle, (WORD)color::red);
-					std::cout << log << std::endl;
-					break;
-			}
+		std::cout << prefix << " [";
+		switch (msg.level()) {
+			case log_level::debug:
+				if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::green);
+				std::cout << "DEBUG";
+				break;
+			case log_level::info:
+				if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::blue);
+				std::cout << "INFO";
+				break;
+			case log_level::warn:
+				if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::yellow);
+				std::cout << "WARN";
+				break;
+			case log_level::error:
+				if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::red);
+				std::cout << "ERROR";
+				break;
+			case log_level::fatal:
+				if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::red);
+				std::cout << "FATAL";
+				break;
+		}
+		if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::white);
+		std::cout << "]> " << msg.content() << std::endl;
 #endif
-		}
-		else {
-			std::cout << log << std::endl;
-		}
 		return true;
 	}
 

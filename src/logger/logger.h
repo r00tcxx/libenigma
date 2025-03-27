@@ -13,7 +13,7 @@ namespace enigma::log {
 
 	   public:
 		~logger() = default;
-		bool init(const log_level lvl, std::vector<sink::ptr>&& sinks, formatter&& formatter);
+		bool init(const log_level lvl, std::vector<sink::ptr>&& sinks);
 		void uninit();
 		void log_it(message&& msg);
 
@@ -21,7 +21,6 @@ namespace enigma::log {
 		logger() = default;
 
 	   private:
-		formatter formatter_;
 		sync_queue<message> queue_;
 		std::vector<sink::ptr> sinks_;
 		std::jthread thread_;

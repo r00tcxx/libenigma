@@ -41,11 +41,9 @@ namespace enigma::log {
 		u64 max_file_size{0};
 		u32 max_file_count{1};
 		mode mode{mode::append};
-		formatter fmt{nullptr};
 	};
 
 	struct console_sink_config {
 		bool color{true};
-		formatter fmt{nullptr};
 	};
 }  // namespace enigma::log
