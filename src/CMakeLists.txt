@@ -14,9 +14,9 @@ file(GLOB_RECURSE HEADER
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "source" FILES ${SOURCE})
-source_group(TREE ${CMAKE_SOURCE_DIR}/include PREFIX "include" FILES ${HEADER})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/../include PREFIX "include" FILES ${HEADER})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 add_library(${PROJECT_NAME} STATIC ${HEADER} ${SOURCE})

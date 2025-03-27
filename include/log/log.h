@@ -44,70 +44,73 @@ namespace enigma::log {
 	* we don't need to worry about memory allocation issues—the fmt library handles it automatically.
 	*/
 	template <typename... Args>
-	void log_debug(const char* format, Args&&... args) {
+	void log_debug(std::string_view format, Args&&... args) {
+
+		fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
+
 		auto s = fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
 		log_it(
 			message(log_level::debug, time(NULL), native::process::get_current_thread_id(), nullptr, 0, std::move(s)));
 	}
 
 	template <typename... Args>
-	void log_debug(const char* file, const int line, const char* format, Args&&... args) {
+	void log_debug(const char* file, const int line, std::string_view format, Args&&... args) {
 		auto s = fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
 		log_it(
 			message(log_level::debug, time(NULL), native::process::get_current_thread_id(), file, line, std::move(s)));
 	}
 
 	template <typename... Args>
-	void log_info(const char* format, Args&&... args) {
+	void log_info(std::string_view format, Args&&... args) {
 		auto s = fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
 		log_it(
 			message(log_level::info, time(NULL), native::process::get_current_thread_id(), nullptr, 0, std::move(s)));
 	}
 
 	template <typename... Args>
-	void log_info(const char* file, const int line, const char* format, Args&&... args) {
+	void log_info(const char* file, const int line, std::string_view format, Args&&... args) {
 		auto s = fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
 		log_it(
 			message(log_level::info, time(NULL), native::process::get_current_thread_id(), file, line, std::move(s)));
 	}
 
 	template <typename... Args>
-	void log_warn(const char* format, Args&&... args) {
+	void log_warn(std::string_view format, Args&&... args) {
 		auto s = fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
 		log_it(
 			message(log_level::warn, time(NULL), native::process::get_current_thread_id(), nullptr, 0, std::move(s)));
 	}
 
 	template <typename... Args>
-	void log_warn(const char* file, const int line, const char* format, Args&&... args) {
+	void log_warn(const char* file, const int line, std::string_view format, Args&&... args) {
 		auto s = fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
 		log_it(
 			message(log_level::warn, time(NULL), native::process::get_current_thread_id(), file, line, std::move(s)));
 	}
 
 	template <typename... Args>
-	void log_error(const char* format, Args&&... args) {
+	void log_error(std::string_view format, Args&&... args) {
 		auto s = fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
 		log_it(
 			message(log_level::error, time(NULL), native::process::get_current_thread_id(), nullptr, 0, std::move(s)));
 	}
 
 	template <typename... Args>
-	void log_error(const char* file, const int line, const char* format, Args&&... args) {
+	void log_error(const char* file, const int line, std::string_view format, Args&&... args) {
 		auto s = fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
 		log_it(
 			message(log_level::error, time(NULL), native::process::get_current_thread_id(), file, line, std::move(s)));
 	}
 
 	template <typename... Args>
-	void log_fatal(const char* format, Args&&... args) {
+	void log_fatal(std::string_view format, Args&&... args) {
 		auto s = fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
 		log_it(
 			message(log_level::fatal, time(NULL), native::process::get_current_thread_id(), nullptr, 0, std::move(s)));
 	}
 
 	template <typename... Args>
-	void log_fatal(const char* file, const int line, const char* format, Args&&... args) {
+	void log_fatal(const char* file, const int line, std::string_view format, Args&&... args) {
 		auto s = fmt::vformat(format, fmt::make_format_args(std::forward<Args>(args)...));
 		log_it(
 			message(log_level::fatal, time(NULL), native::process::get_current_thread_id(), file, line, std::move(s)));

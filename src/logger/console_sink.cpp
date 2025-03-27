@@ -24,10 +24,10 @@ enum class color : WORD {
 namespace enigma::log {
 	bool console_sink::init() {
 #ifdef _WIN32
-		AllocConsole();
-		freopen_s(&stream, "CONOUT$", "w", stdout);
-		freopen_s(&stream, "CONOUT$", "w", stderr);
-		freopen_s(&stream, "CONIN$", "r", stdin);
+		//AllocConsole();
+		//freopen_s(&stream, "CONOUT$", "w", stdout);
+		//freopen_s(&stream, "CONOUT$", "w", stderr);
+		//freopen_s(&stream, "CONIN$", "r", stdin);
 		std_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 		return true;
 #endif
@@ -35,8 +35,8 @@ namespace enigma::log {
 
 	void console_sink::uninit() {
 #ifdef _WIN32
-		if (stream) fclose(stream);
-		FreeConsole();
+		//if (stream) fclose(stream);
+		//FreeConsole();
 #endif
 	}
 
