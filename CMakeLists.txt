@@ -14,7 +14,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin/debug)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin/release)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-include(${CMAKE_SOURCE_DIR}/cmake/get_version.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/get_version.cmake)
 
 if(MSVC)
     add_definitions(-D_UNICODE -DUNICODE)
@@ -40,4 +40,4 @@ endif()
 #configure version file
 GET_REP_VERSION(MAJOR MINOR BUILD COMMIT)
 set(CURRENT_VERSION "${MAJOR}.${MINOR}.${BUILD}.${COMMIT}")
-configure_file(${CMAKE_SOURCE_DIR}/version.h.in ${CMAKE_SOURCE_DIR}/include/version.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/version.h @ONLY)
