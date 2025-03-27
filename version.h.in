@@ -1,0 +1,2 @@
+﻿#pragma once 
+#define LIB_ENIGMA_VERSION "@CURRENT_VERSION@"
