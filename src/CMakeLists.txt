@@ -10,7 +10,7 @@ file(GLOB_RECURSE SOURCE
 )
 
 file(GLOB_RECURSE HEADER
-    "${CMAKE_SOURCE_DIR}/include/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../include/*.h"
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "source" FILES ${SOURCE})

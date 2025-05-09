@@ -22,15 +22,20 @@
 #include <chrono>
 
 namespace enigma {
+	using microseconds = std::chrono::microseconds;
+	using minseconds   = std::chrono::milliseconds;
+	using seconds	   = std::chrono::seconds;
+	using mins		   = std::chrono::minutes;
+	using houers	   = std::chrono::hours;
+
+	template <typename T>
+	inline std::size_t now() {
+		return std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch()).count();
+	}
+
 	class system_clock {
 	   public:
 		system_clock() {}
 		~system_clock() {}
-
-		inline std::size_t ms() {
-			return std::chrono::duration_cast<std::chrono::milliseconds>(
-					   std::chrono::system_clock::now().time_since_epoch())
-				.count();
-		}
 	};
 }  // namespace enigma

@@ -19,11 +19,7 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#include <condition_variable>
-#include <mutex>
-#include <optional>
-#include <queue>
-#include <stop_token>
+#include "thread.h"
 
 namespace enigma {
 	template <typename T>
@@ -78,9 +74,9 @@ namespace enigma {
 		}
 
 	   private:
-		std::queue<T> queue_;
-		std::mutex mutex_;
-		std::condition_variable cv_;
-		std::stop_source stop_source_;
+		queue<T> queue_;
+		mutex mutex_;
+		condition_variable cv_;
+		stop_source stop_source_;
 	};
 }  // namespace enigma

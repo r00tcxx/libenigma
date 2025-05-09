@@ -45,6 +45,7 @@ namespace enigma {
 		string& to_lower();
 		string& to_upper();
 		std::wstring to_wstring() const;
+		std::string to_stdstring() const;
 		string& trim();
 		string& replace(const string& from, const string& to);
 		std::vector<string> split(const string& delimiter, bool keep_empty = false);
@@ -53,4 +54,6 @@ namespace enigma {
 		static string from_wstring(const std::wstring& wstr);
 		static string from_wstring(const wchar_t* wstr, std::size_t len);
 	};
+
+	using string_view = std::string_view;
 }  // namespace enigma

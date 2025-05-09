@@ -19,15 +19,17 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#include <thread>
-#include <stop_token>
 #include <condition_variable>
-#include <shared_mutex>
 #include <mutex>
+#include <shared_mutex>
+#include <stop_token>
+#include <thread>
 
 namespace enigma {
-	using thread = std::thread;
-	using jthread = std::jthread;
-	using stop_source = std::stop_source;
-	using stop_token  = std::stop_token;
-}
+	using thread			 = std::thread;
+	using jthread			 = std::jthread;
+	using stop_source		 = std::stop_source;
+	using stop_token		 = std::stop_token;
+	using condition_variable = std::condition_variable;
+	using mutex				 = std::mutex;
+}  // namespace enigma

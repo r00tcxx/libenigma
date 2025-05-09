@@ -1,12 +1,11 @@
 #include "console_sink.h"
 #include <iostream>
-#include "fmt/chrono.h"
-#include "fmt/format.h"
+#include "clock.h"
+#include "format.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-static FILE* stream{nullptr};
 static HANDLE std_handle;
 enum class color : WORD {
 	black	= 0,
@@ -24,10 +23,6 @@ enum class color : WORD {
 namespace enigma::log {
 	bool console_sink::init() {
 #ifdef _WIN32
-		//AllocConsole();
-		//freopen_s(&stream, "CONOUT$", "w", stdout);
-		//freopen_s(&stream, "CONOUT$", "w", stderr);
-		//freopen_s(&stream, "CONIN$", "r", stdin);
 		std_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 		return true;
 #endif
@@ -35,16 +30,14 @@ namespace enigma::log {
 
 	void console_sink::uninit() {
 #ifdef _WIN32
-		//if (stream) fclose(stream);
-		//FreeConsole();
 #endif
 	}
 
 	bool console_sink::log(const log_level lvl, const message& msg) {
 		if (static_cast<int>(msg.level()) < static_cast<int>(lvl)) return true;
 
-		auto timestamp = fmt::format("{:%m-%d %H:%M:%S}", fmt::localtime(msg.timestamp()));
-		auto prefix	   = fmt::format("{}.{:03} [{}]", timestamp, msg.timestamp() % 1000, msg.thread());
+		auto timestamp = format("{:%m-%d %H:%M:%S}", localtime(msg.timestamp()));
+		auto prefix	   = format("{}.{:03} [{}]", timestamp, msg.timestamp() % 1000, msg.thread());
 #ifdef _WIN32
 		std::cout << prefix << " [";
 		switch (msg.level()) {

@@ -1,5 +1,5 @@
-#include <algorithm>
 #include "string/str.h"
+#include <algorithm>
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -37,7 +37,7 @@ namespace enigma {
 		return *this;
 	}
 
-	string& string::operator = (char* str) noexcept {
+	string& string::operator=(char* str) noexcept {
 		assign(str);
 		return *this;
 	}
@@ -59,6 +59,10 @@ namespace enigma {
 		std::wstring wstr(size_need, 0);
 		MultiByteToWideChar(CP_UTF8, 0, c_str(), static_cast<int>(size()), wstr.data(), size_need);
 		return wstr;
+	}
+
+	std::string string::to_stdstring() const {
+		return *this;
 	}
 
 	string& string::trim() {

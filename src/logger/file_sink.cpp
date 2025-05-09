@@ -2,10 +2,8 @@
 #include <filesystem>
 #include <map>
 #include <regex>
-
-#include "fmt/chrono.h"
-#include "fmt/format.h"
-
+#include "format.h"
+#include <chrono>
 namespace enigma::log {
 	bool file_sink::init() {
 		if (!std::filesystem::exists((std::string)config_.log_dir) &&
@@ -44,9 +42,10 @@ namespace enigma::log {
 				lvl_str = "FATAL";
 				break;
 		}
-		auto timestamp = fmt::format("{:%m-%d %H:%M:%S}", fmt::localtime(msg.timestamp()));
-		auto log	   = fmt::format("{}.{:03} [{}] [{}]> {}", timestamp, msg.timestamp() % 1000, msg.thread(), lvl_str,
-									 msg.content());
+		
+		auto timestamp = format("{:%m-%d %H:%M:%S}", localtime(msg.timestamp()));
+		auto log =
+			format("{}.{:03} [{}] [{}]> {}", timestamp, msg.timestamp() % 1000, msg.thread(), lvl_str, msg.content());
 		file_->write(log);
 		if (!config_.max_file_size || file_->size() < config_.max_file_size) return true;
 		file_->close();
@@ -55,7 +54,7 @@ namespace enigma::log {
 
 	std::map<std::size_t, log_file::ptr> file_sink::list_logs() {
 		std::map<std::size_t, log_file::ptr> logs;
-		const std::regex regex(fmt::format("^{}\\.(\\d+)\\.log$", config_.app_name));
+		const std::regex regex(format("^{}\\.(\\d+)\\.log$", config_.app_name));
 		std::filesystem::directory_iterator end;
 		for (std::filesystem::directory_iterator it((std::string)config_.log_dir); it != end; ++it) {
 			if (!std::filesystem::is_regular_file(it->status())) continue;

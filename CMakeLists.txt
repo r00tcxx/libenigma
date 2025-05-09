@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
 project(enigma LANGUAGES CXX C)
-set(CMAKE_C_STANDARD 23)
-set(CMAKE_C_STANDARD_REQUIRED True)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 option(BUILD_TEST ON)

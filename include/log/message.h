@@ -27,7 +27,7 @@ namespace enigma::log {
 
 	class message : public no_cmable {
 	   public:
-		message(const log_level lvl, const u64 time, const u64 thread, const char* file, const int line,
+		message(const log_level lvl, const u64 time, const u64 thread, const bytes file, const i32 line,
 				string&& msg) noexcept
 			: lvl_(lvl), time_(time), thread_(thread), file_(file), line_(line), msg_(std::move(msg)) {}
 		message(message&& other) noexcept { operator=(std::move(other)); }
@@ -47,15 +47,15 @@ namespace enigma::log {
 		inline u64 timestamp() const { return time_; }
 		inline u64 thread() const { return thread_; }
 		inline const string& content() const { return msg_; }
-		inline const char* file() const { return file_; }
-		inline int line() const { return line_; }
+		inline const bytes file() const { return file_; }
+		inline i32 line() const { return line_; }
 
 	   private:
 		log_level lvl_;
 		u64 time_;
 		u64 thread_;
 		string msg_;
-		const char* file_;
-		int line_;
+		bytes file_;
+		i32 line_;
 	};
 }  // namespace enigma::log
