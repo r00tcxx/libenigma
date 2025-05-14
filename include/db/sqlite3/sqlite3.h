@@ -7,7 +7,7 @@
 #include "class.h"
 #include "types.h"
 
-namespace enigma::db {
+namespace ema::db {
 	enum class sqlite3_open_flags : int {
 		READ		   = 0x00000001,
 		READ_WRITE	   = 0x00000002,

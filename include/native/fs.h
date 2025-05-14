@@ -21,7 +21,7 @@
 #pragma once
 #include "types.h"
 
-namespace enigma::native::fs {
+namespace ema::native::fs {
 	string get_program_data_path();
 	string get_program_file_path();
 	string get_tmp_path();

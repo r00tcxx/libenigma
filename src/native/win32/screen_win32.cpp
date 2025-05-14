@@ -4,7 +4,7 @@
 
 #pragma comment(lib, "Shcore.lib")
 
-namespace enigma::native::screen {
+namespace ema::native::screen {
 
 	UINT GetMonitorDPI(HMONITOR hMonitor) {
 		UINT dpiX = 0;
@@ -64,4 +64,4 @@ namespace enigma::native::screen {
 		EnumDisplayMonitors(NULL, NULL, monitor_enum_proc, reinterpret_cast<LPARAM>(&screens));
 		return screens;
 	}
-}  // namespace enigma::native::screen
+}  // namespace ema::native::screen

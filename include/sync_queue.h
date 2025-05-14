@@ -20,8 +20,9 @@
  */
 #pragma once
 #include "thread.h"
+#include "types.h"
 
-namespace enigma {
+namespace ema {
 	template <typename T>
 	class sync_queue {
 	   public:
@@ -73,10 +74,15 @@ namespace enigma {
 			cv_.notify_all();
 		}
 
+		auto size() {
+			std::lock_guard<std::mutex> lock(mutex_);
+			return queue_.size();
+		}
+
 	   private:
 		queue<T> queue_;
 		mutex mutex_;
 		condition_variable cv_;
 		stop_source stop_source_;
 	};
-}  // namespace enigma
+}  // namespace EMA

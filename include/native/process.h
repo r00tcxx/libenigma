@@ -21,7 +21,7 @@
 #pragma once
 #include "../types.h"
 
-namespace enigma::native::process {
+namespace ema::native::process {
 	string get_proc_name();
 	string get_proc_path();
 	string get_proc_dir();

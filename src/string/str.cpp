@@ -6,7 +6,7 @@
 #include <Windows.h>
 #endif
 
-namespace enigma {
+namespace ema {
 	string::string(const std::string& other) noexcept : std::string(other) {}
 	string::string(std::string&& other) noexcept : std::string(std::move(other)) {}
 	string::string(const string& other) noexcept : std::string(other) {}
@@ -114,4 +114,4 @@ namespace enigma {
 							nullptr);
 		return str;
 	}
-}  // namespace enigma
+}  // namespace ema

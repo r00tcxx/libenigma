@@ -19,32 +19,9 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#include <chrono>
 
-namespace ema {
-	using microseconds = std::chrono::microseconds;
-	using minseconds   = std::chrono::milliseconds;
-	using seconds	   = std::chrono::seconds;
-	using mins		   = std::chrono::minutes;
-	using houers	   = std::chrono::hours;
-
-	template <typename T>
-	inline std::size_t now() {
-		return std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch()).count();
-	}
-
-	class clock {
-	   public:
-		clock() {}
-		~clock() {}
-
-		inline void begin() { _start_time = std::chrono::system_clock::now(); }
-		inline u64 end() {
-			auto end_time = std::chrono::system_clock::now();
-			return std::chrono::duration_cast<std::chrono::milliseconds>(end_time - _start_time).count();
-		}
-
-	   private:
-		std::chrono::time_point<std::chrono::system_clock> _start_time;
-	};
-}  // namespace ema
+#include "class.h"
+#include "singleton.h"
+#include "types.h" 
+#include "format.h" 
+#include "bit_mask.h" 

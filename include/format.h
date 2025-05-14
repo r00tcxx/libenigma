@@ -21,24 +21,24 @@
 #pragma once
 
 #ifdef _MSC_VER
-#include <format>
 #include <chrono>
+#include <format>
 #include <ranges>
 #include "string/str.h"
 
 template <>
-struct std::formatter<enigma::string, char> {
+struct std::formatter<ema::string, char> {
 	template <class ParseContext>
 	constexpr ParseContext::iterator parse(ParseContext& ctx) {
 		return std::ranges::find(ctx.begin(), ctx.end(), '}');
 	}
 	template <class FmtContext>
-	FmtContext::iterator format(enigma::string s, FmtContext& ctx) const {
+	FmtContext::iterator format(ema::string s, FmtContext& ctx) const {
 		return std::format_to(ctx.out(), "{}", s.c_str());
 	}
 };
 
-namespace enigma {
+namespace ema {
 	using std::format;
 	using std::localtime;
 	using std::make_format_args;
@@ -48,11 +48,11 @@ namespace enigma {
 		return std::chrono::system_clock::from_time_t(t);
 	}
 
-}  // namespace enigma
-#else 
+}  // namespace ema
+#else
 #include <ranges>
-#include "fmt/format.h"
 #include "fmt/chrono.h"
+#include "fmt/format.h"
 
 struct fmt::formatter<enigma::string> {
 	constexpr auto parse(fmt::format_parse_context& ctx) { return std::ranges::find(ctx.begin(), ctx.end(), '}'); }
@@ -62,10 +62,10 @@ struct fmt::formatter<enigma::string> {
 	}
 };
 
-namespace enigma {
+namespace ema {
 	using fmt::format;
+	using fmt::localtime;
 	using fmt::make_format_args;
 	using fmt::vformat;
-	using fmt::localtime;
-} 
+}  // namespace ema
 #endif

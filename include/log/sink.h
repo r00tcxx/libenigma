@@ -21,7 +21,7 @@
 #pragma once
 #include "message.h"
 
-namespace enigma::log {
+namespace ema::log {
 	class sink : public no_cmable {
 	   public:
 		using ptr = unique_ptr<sink>;

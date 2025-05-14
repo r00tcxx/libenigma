@@ -1,8 +1,8 @@
 #include "logger.h"
-#include "file_sink.h"
 #include "console_sink.h"
+#include "file_sink.h"
 
-namespace enigma::log {
+namespace ema::log {
 	bool init_logger(const log_level lvl, std::vector<sink::ptr>&& sinks) {
 		return logger::instance().init(lvl, std::move(sinks));
 	}
@@ -25,8 +25,8 @@ namespace enigma::log {
 
 	bool logger::init(const log_level lvl, std::vector<sink::ptr>&& sinks) {
 		if (sinks.empty()) return false;
-		sinks_	   = std::move(sinks);
-		lvl_	   = lvl;
+		sinks_ = std::move(sinks);
+		lvl_   = lvl;
 
 		bool all_success{true};
 		for (auto& sink : sinks_)
@@ -56,4 +56,4 @@ namespace enigma::log {
 		queue_.push(std::move(msg));
 	}
 
-}  // namespace enigma::log
+}  // namespace ema::log

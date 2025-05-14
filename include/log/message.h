@@ -22,14 +22,14 @@
 #include "class.h"
 #include "types.h"
 
-namespace enigma::log {
+namespace ema::log {
 	enum class log_level : int { debug, info, warn, error, fatal };
 
 	class message : public no_cmable {
 	   public:
-		message(const log_level lvl, const u64 time, const u64 thread, const bytes file, const i32 line,
+		message(const log_level lvl, const u64 time, const u64 thread, const bytes file, const i32 line, const bytes modlue,
 				string&& msg) noexcept
-			: lvl_(lvl), time_(time), thread_(thread), file_(file), line_(line), msg_(std::move(msg)) {}
+			: lvl_(lvl), time_(time), thread_(thread), file_(file), line_(line), module_(modlue), msg_(std::move(msg)) {}
 		message(message&& other) noexcept { operator=(std::move(other)); }
 		~message() = default;
 
@@ -39,6 +39,7 @@ namespace enigma::log {
 			thread_ = other.thread_;
 			file_	= other.file_;
 			line_	= other.line_;
+			module_ = other.module_;
 			msg_	= std::move(other.msg_);
 			return *this;
 		}
@@ -49,9 +50,11 @@ namespace enigma::log {
 		inline const string& content() const { return msg_; }
 		inline const bytes file() const { return file_; }
 		inline i32 line() const { return line_; }
+		inline const bytes module() const { return module_; }
 
 	   private:
 		log_level lvl_;
+		bytes module_;
 		u64 time_;
 		u64 thread_;
 		string msg_;

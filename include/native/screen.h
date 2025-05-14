@@ -21,7 +21,7 @@
 #pragma once
 #include "types.h"
 
-namespace enigma::native::screen {
+namespace ema::native::screen {
 #ifdef _WIN32
 	enum class taskbar_side {
 		unknown,

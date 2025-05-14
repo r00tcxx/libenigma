@@ -5,7 +5,7 @@
 #include "log/sink.h"
 #include "log_file.h"
 
-namespace enigma::log {
+namespace ema::log {
 	class console_sink : public sink {
 	   public:
 		console_sink(console_sink_config&& config) : config_(std::move(config)) {}
@@ -18,4 +18,4 @@ namespace enigma::log {
 	   private:
 		console_sink_config config_;
 	};
-}  // namespace enigma::log
+}  // namespace ema::log

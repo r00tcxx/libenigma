@@ -1,11 +1,11 @@
-#include "native/fs.h"
 #include <filesystem>
+#include "native/fs.h"
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <shellapi.h>
 #include <shlobj.h>
 
-namespace enigma::native::fs {
+namespace ema::native::fs {
 	HANDLE get_user_session_token() {
 		HANDLE token{INVALID_HANDLE_VALUE};
 		if (!OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY, &token))
@@ -59,4 +59,4 @@ namespace enigma::native::fs {
 		std::error_code ec;
 		return std::filesystem::create_directories(path.to_stdstring(), ec);
 	}
-}
+}  // namespace ema::native::fs

@@ -18,43 +18,44 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 #pragma once
-#include <string>
-#include <vector>
+#include "event_handler.h"
 
 namespace ema {
-	class string : public std::string {
+	class event_bus : public no_cmable {
 	   public:
-		using std::string::string;
-		using std::string::operator=;
-		using std::string::operator+=;
-		using std::string::operator[];
-		string(const std::string& other) noexcept;
-		string(std::string&& other) noexcept;
-		string(const string& other) noexcept;
-		string(string&& other) noexcept;
-		string& operator=(const std::string&) noexcept;
-		string& operator=(std::string&&) noexcept;
-		string& operator=(const string&) noexcept;
-		string& operator=(string&&) noexcept;
-		string& operator=(const char* str) noexcept;
-		string& operator=(char* str) noexcept;
-		inline operator std::string() const noexcept { return *this; }
+		event_bus()	 = default;
+		~event_bus() = default;
 
-	   public:
-		string& to_lower();
-		string& to_upper();
-		std::wstring to_wstring() const;
-		std::string to_stdstring() const;
-		string& trim();
-		string& replace(const string& from, const string& to);
-		std::vector<string> split(const string& delimiter, bool keep_empty = false);
+		template <detail::msg_t T>
+		bool publish(T&& msg, func<void()>&& ack_callback = nullptr) {
+			string type_name = typeid(T).name();
+			lock_guard lock(_mutex);
+			bool result{false};
+			for (auto& handler : _handlers) {
+				if (handler->_has_type(type_name)) {
+					handler->_deliver(detail::event{.type = type_name, .ev = msg, .ack = ack_callback});
+					result = true;
+				}
+			}
+			return result;
+		}
 
-	   public:
-		static string from_wstring(const std::wstring& wstr);
-		static string from_wstring(const wchar_t* wstr, std::size_t len);
+		bool subscribe(event_handler::ptr handler) {
+			if (!handler) return false;
+			lock_guard lock(_mutex);
+			return _handlers.insert(handler).second;
+		}
+
+		void unsubscribe(event_handler::ptr handler) {
+			if (!handler) return;
+			lock_guard lock(_mutex);
+			_handlers.erase(handler);
+		}
+
+	   private:
+		mutex _mutex;
+		set<event_handler::ptr> _handlers;
 	};
-
-	using string_view = std::string_view;
-
-}  // namespace EMA
+}  // namespace ema

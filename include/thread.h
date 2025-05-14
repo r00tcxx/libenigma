@@ -19,17 +19,34 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
+#include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <shared_mutex>
 #include <stop_token>
 #include <thread>
-
-namespace enigma {
+#include <future>
+namespace ema {
 	using thread			 = std::thread;
 	using jthread			 = std::jthread;
 	using stop_source		 = std::stop_source;
 	using stop_token		 = std::stop_token;
 	using condition_variable = std::condition_variable;
 	using mutex				 = std::mutex;
-}  // namespace enigma
+	using shared_mutex		 = std::shared_mutex;
+	using atomic_bool = std::atomic_bool;
+	using atomic_u32  = std::atomic_uint32_t;
+	using atomic_u64  = std::atomic_uint64_t;
+
+	template <typename T>
+	using unique_lock = std::unique_lock<T>;
+
+	template <typename T>
+	using lock_guard = std::lock_guard<T>;
+
+	template <typename T>
+	using future = std::future<T>;
+
+	template <typename T>
+	using promise = std::promise<T>;
+}  // namespace ema

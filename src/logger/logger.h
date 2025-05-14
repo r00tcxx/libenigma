@@ -4,7 +4,7 @@
 #include "sync_queue.h"
 #include "types.h"
 
-namespace enigma::log {
+namespace ema::log {
 	class logger : public singleton<logger> {
 		friend singleton<logger>;
 
@@ -24,4 +24,4 @@ namespace enigma::log {
 		log_level lvl_;
 	};
 
-}  // namespace enigma::log
+}  // namespace ema::log

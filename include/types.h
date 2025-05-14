@@ -2,7 +2,7 @@
  * Created on Mon Mar 24 2025
  *
  * The MIT License (MIT)
- * Copyright (c) 2025 enigma
+ * Copyright (c) 2025 ema
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  * and associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -27,34 +27,35 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "string/str.h"
+#include <optional>
+#include <any>
 #include "class.h"
 #include "singleton.h"
+#include "string/str.h"
 
 namespace std {
 	template <>
-	struct hash<enigma::string> {
-		std::size_t operator()(const enigma::string& s) const noexcept {
-			return std::hash<std::string>()(s);
-		}
+	struct hash<ema::string> {
+		std::size_t operator()(const ema::string& s) const noexcept { return std::hash<std::string>()(s); }
 	};
 }  // namespace std
 
-namespace enigma {
-	using i16 = short;
-	using u16 = unsigned short;
-	using i32  = int;
-	using u32  = unsigned int;
-	using i32l = long;
-	using u32l = unsigned long;
-	using i64  = long long;
-	using u64  = unsigned long long;
-	using f32  = float;
-	using f64  = double;
-	using byte = char;
-	using bytes = char*; 
+namespace ema {
+	using i16	= short;
+	using u16	= unsigned short;
+	using i32	= int;
+	using u32	= unsigned int;
+	using i32l	= long;
+	using u32l	= unsigned long;
+	using i64	= long long;
+	using u64	= unsigned long long;
+	using f32	= float;
+	using f64	= double;
+	using byte	= char;
+	using bytes = char*;
+	using any = std::any;
 
-	using result = std::pair<bool, string>;
+	using std::any_cast;
 
 	template <typename T>
 	using vector = std::vector<T>;
@@ -80,9 +81,21 @@ namespace enigma {
 	template <typename T, typename D = std::default_delete<T>>
 	using unique_ptr = std::unique_ptr<T, D>;
 
-	using std::make_unique;
 	using std::make_shared;
+	using std::make_unique;
 
 	template <typename T>
 	using func = std::function<T>;
-}  // namespace enigma
+
+	template <typename T>
+	using optional = std::optional<T>;
+
+	using nullopt_t = std::nullopt_t;
+
+	using err = std::pair<bool, string>;
+
+	template<typename T>
+	using result = std::pair<bool, optional<T>>;
+
+	inline constexpr nullopt_t nil = nullopt_t{nullopt_t::_Tag{}};
+}  // namespace EMA

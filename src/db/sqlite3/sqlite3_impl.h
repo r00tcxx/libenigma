@@ -2,7 +2,7 @@
 #include "db/sqlite3/sqlite3.h"
 #include "core/sqlite3.h"
 
-namespace enigma::db {
+namespace ema::db {
 	class sqlite3cpp::impl {
 public:
 		impl() = default;

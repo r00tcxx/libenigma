@@ -20,7 +20,7 @@ enum class color : WORD {
 };
 #endif
 
-namespace enigma::log {
+namespace ema::log {
 	bool console_sink::init() {
 #ifdef _WIN32
 		std_handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -63,9 +63,11 @@ namespace enigma::log {
 				break;
 		}
 		if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::white);
-		std::cout << "]> " << msg.content() << std::endl;
+		std::cout << "] ";
+		if (msg.module()) std::cout << "[" << msg.module() << "]";
+		std::cout << "> " << msg.content() << std::endl;
 #endif
 		return true;
 	}
 
-}  // namespace enigma::log
+}  // namespace ema::log

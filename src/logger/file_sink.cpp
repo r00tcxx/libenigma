@@ -1,10 +1,11 @@
 #include "file_sink.h"
+#include <chrono>
 #include <filesystem>
 #include <map>
 #include <regex>
 #include "format.h"
-#include <chrono>
-namespace enigma::log {
+
+namespace ema::log {
 	bool file_sink::init() {
 		if (!std::filesystem::exists((std::string)config_.log_dir) &&
 			std::filesystem::create_directories((std::string)config_.log_dir))
@@ -42,10 +43,17 @@ namespace enigma::log {
 				lvl_str = "FATAL";
 				break;
 		}
-		
+
 		auto timestamp = format("{:%m-%d %H:%M:%S}", localtime(msg.timestamp()));
-		auto log =
-			format("{}.{:03} [{}] [{}]> {}", timestamp, msg.timestamp() % 1000, msg.thread(), lvl_str, msg.content());
+		string log;
+		if (msg.module()) {
+			log = format("{}.{:03} [{}] [{}] [{}]> {}", timestamp, msg.timestamp() % 1000, msg.thread(), lvl_str,
+						 msg.module(), msg.content());
+		}
+		else {
+			log = format("{}.{:03} [{}] [{}]> {}", timestamp, msg.timestamp() % 1000, msg.thread(), lvl_str,
+						 msg.content());
+		}
 		file_->write(log);
 		if (!config_.max_file_size || file_->size() < config_.max_file_size) return true;
 		file_->close();
@@ -90,4 +98,4 @@ namespace enigma::log {
 		return file_->open(true);
 	}
 
-}  // namespace enigma::log
+}  // namespace ema::log

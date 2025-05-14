@@ -19,7 +19,7 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-namespace enigma {
+namespace ema {
 	class no_moveable {
 	   protected:
 		no_moveable() {}
@@ -48,5 +48,4 @@ namespace enigma {
 	   private:
 		no_constructiable() = delete;
 	};
-
-}  // namespace enigma
+}  // namespace EMA

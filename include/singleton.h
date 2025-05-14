@@ -23,7 +23,7 @@
 #include <memory>
 #include "class.h"
 
-namespace enigma {
+namespace ema {
 	template <class T>
 	class singleton : public no_cmable {
 	   public:
@@ -32,4 +32,4 @@ namespace enigma {
 			return *instance;
 		}
 	};
-}  // namespace enigma
+}  // namespace EMA

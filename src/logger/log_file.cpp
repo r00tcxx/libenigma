@@ -2,7 +2,7 @@
 #include <filesystem>
 #include "format.h"
 
-namespace enigma::log {
+namespace ema::log {
 	bool log_file::open(bool trunc) {
 		if (file_ && file_->is_open()) return true;
 		file_ = make_unique<std::ofstream>(
@@ -37,4 +37,4 @@ namespace enigma::log {
 		return true;
 	}
 
-}  // namespace enigma::log
+}  // namespace ema::log

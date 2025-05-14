@@ -2,7 +2,7 @@
 #include <fstream>
 #include "types.h"
 
-namespace enigma::log {
+namespace ema::log {
 	class log_file {
 	   public:
 		using ptr = unique_ptr<log_file>;
@@ -23,4 +23,4 @@ namespace enigma::log {
 		u64 index_{0};
 		string log_dir_, app_name_;
 	};
-}  // namespace enigma::log
+}  // namespace ema::log

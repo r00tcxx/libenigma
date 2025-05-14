@@ -1,6 +1,6 @@
 #include "sqlite3_impl.h"
 
-namespace enigma::db {
+namespace ema::db {
 	sqlite3_result sqlite3cpp::impl::open(const string& db, const sqlite3_open_flags flags) {
 		if (db.empty()) return {false, "invalid file"};
 		auto code = sqlite3_open_v2(db.c_str(), (sqlite3**)&db_, static_cast<int>(flags), nullptr);

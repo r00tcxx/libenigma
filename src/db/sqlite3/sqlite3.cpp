@@ -2,7 +2,7 @@
 #include "core/sqlite3.h"
 #include "sqlite3_impl.h"
 
-namespace enigma::db {
+namespace ema::db {
 	sqlite3cpp::sqlite3cpp() : impl_(make_unique<impl>()) {
 		//
 	}

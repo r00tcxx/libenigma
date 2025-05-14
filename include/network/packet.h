@@ -2,7 +2,7 @@
 #include "types.h"
 #include <type_traits>
 
-namespace enigma::network {
+namespace ema::network {
 	class packet {
 	   public:
 		packet(const u64 size) { _malloc(size); }
