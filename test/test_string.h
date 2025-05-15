@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 #include "string/str.h"
 
-using namespace enigma;
+using namespace ema;
 
 class TestString : public testing::Test {
    public:

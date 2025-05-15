@@ -29,6 +29,8 @@
 #include <vector>
 #include <optional>
 #include <any>
+#include <random>
+#include <algorithm>
 #include "class.h"
 #include "singleton.h"
 #include "string/str.h"
@@ -83,6 +85,8 @@ namespace ema {
 
 	using std::make_shared;
 	using std::make_unique;
+	using std::move;
+	using std::forward;
 
 	template <typename T>
 	using func = std::function<T>;
@@ -98,4 +102,12 @@ namespace ema {
 	using result = std::pair<bool, optional<T>>;
 
 	inline constexpr nullopt_t nil = nullopt_t{nullopt_t::_Tag{}};
+
+
+	template<typename T>
+	inline T random(const T from, const T to) {
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		return std::uniform_int_distribution<u64>(from, to)(gen);
+	}
 }  // namespace EMA

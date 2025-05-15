@@ -49,13 +49,13 @@ namespace ema {
 
 		template <typename U>
 		void push(U&& value) {
-			std::lock_guard<std::mutex> lock(mutex_);
+			lock_guard<std::mutex> lock(mutex_);
 			queue_.push(std::forward<U>(value));
 			cv_.notify_one();
 		}
 
-		std::optional<T> pop() {
-			std::unique_lock<std::mutex> lock(mutex_);
+		optional<T> pop() {
+			unique_lock<std::mutex> lock(mutex_);
 			cv_.wait(lock, [this] { return !queue_.empty() || stop_source_.stop_requested(); });
 			if (stop_source_.stop_requested()) return std::nullopt;
 			T value = std::move(queue_.front());
@@ -63,8 +63,19 @@ namespace ema {
 			return value;
 		}
 
+		optional<T> pop(func<bool()>&& cond) {
+			unique_lock<std::mutex> lock(mutex_);
+			cv_.wait(lock, [this, cond = move(cond)] {
+				return !queue_.empty() || stop_source_.stop_requested() || (cond ? cond() : false);
+			});
+			if (stop_source_.stop_requested()) return std::nullopt;
+			T value = std::move(queue_.front());
+			queue_.pop();
+			return value;
+		}
+
 		void clear() {
-			std::lock_guard<std::mutex> lock(mutex_);
+			lock_guard<std::mutex> lock(mutex_);
 			while (!queue_.empty())
 				queue_.pop();
 		}
@@ -75,7 +86,7 @@ namespace ema {
 		}
 
 		auto size() {
-			std::lock_guard<std::mutex> lock(mutex_);
+			lock_guard<std::mutex> lock(mutex_);
 			return queue_.size();
 		}
 

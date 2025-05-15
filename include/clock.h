@@ -20,6 +20,7 @@
  */
 #pragma once
 #include <chrono>
+#include "types.h"
 
 namespace ema {
 	using microseconds = std::chrono::microseconds;

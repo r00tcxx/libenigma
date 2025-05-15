@@ -46,7 +46,7 @@ namespace ema {
 		event_handler()	 = default;
 		~event_handler() = default;
 
-		void start() {
+		inline void start() {
 			if (_start) return;
 			_thread = jthread(
 				[this](stop_token stop_token) {
@@ -59,22 +59,21 @@ namespace ema {
 						if (it == _event_handles.end()) continue;
 						it->second(event);
 					}
-				},
-				_thread.get_stop_token());
+				});
 			_start = true;
 		}
 
-		void stop() {
+		inline void stop() {
 			if (!_start) return;
-			_events.stop();
 			_thread.request_stop();
+			_events.stop();
 			if (_thread.joinable()) _thread.join();
 			_events.clear();
 			_start = false;
 		}
 
 		template <detail::msg_t T>
-		void on(func<void(const T)>&& callback) {
+		inline void on(func<void(const T)>&& callback) {
 			if (!callback) return;
 			string type_name = typeid(T).name();
 			lock_guard lock(_mutex);
@@ -90,13 +89,15 @@ namespace ema {
 		}
 
 		template <detail::msg_t T>
-		void cancel() {
+		inline void cancel() {
 			string type_name = typeid(T).name();
 			lock_guard lock(_mutex);
 			_event_handles.erase(type_name);
 		}
 
 		inline void clear() { _events.clear(); }
+
+		inline bool is_start() { return _start; }
 
 	   private:
 		bool _has_type(const string& type_name) {

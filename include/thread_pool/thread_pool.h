@@ -19,7 +19,6 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#include "../clock.h"
 #include "../sync_queue.h"
 #include "../types.h"
 
@@ -34,108 +33,99 @@ namespace ema {
 			using ptr = unique_ptr<worker>;
 
 		   public:
-			worker(sync_queue<task>& task_list) : _task_list(task_list) {}
-			~worker() { stop(); }
-
-			void start() {
-				if (_thread.joinable()) return;
-				_thread = jthread(
-					[this](stop_token stop_token) {
-						while (!stop_token.stop_requested()) {
-							clock clock;
-							clock.begin();
-							auto task_opt = _task_list.pop();
-							_average_get_work_cost = clock.end();
-							if (!task_opt.has_value()) continue;
-							auto& task			   = task_opt.value();
-							if (task.function) task.function();
-							if (_idle && !stop_token.stop_requested()) {
-								unique_lock idle_lock(_idle_mtx);
-								_idle_cv.wait(idle_lock,
-											  [this, stop_token] { return !_idle || stop_token.stop_requested(); });
-							}
-						}
-					},
-					_thread.get_stop_token());
+			worker(stop_token stop_token, atomic_u64& counter) : _counter(counter) {
+				_thread = thread([this, stop_token]() {
+					while (!stop_token.stop_requested()) {
+						_busy		  = false;
+						auto task_opt = _tasks.pop([&] { return stop_token.stop_requested(); });
+						_busy		  = true;
+						if (!task_opt.has_value()) continue;
+						auto& task = task_opt.value();
+						if (task.function) task.function();
+						_counter--;
+					}
+				});
 			}
 
-			void stop() {
-				_thread.request_stop();
+			~worker() {
+				_tasks.clear();
+				_tasks.stop();
 				if (_thread.joinable()) _thread.join();
 			}
 
-			inline void active() {
-				_idle = false;
-				_average_get_work_cost = 0;
-				_idle_cv.notify_all();
+			inline bool is_busy() const { return _busy; }
+			inline auto get_task_count() { return _tasks.size(); }
+			inline void push_task(task&& task) {
+				_counter++;
+				_tasks.push(move(task));
 			}
 
-			inline void idle() { _idle = true; }
-
-			inline u64 average_get_work_cost() { return _average_get_work_cost; }
-
 		   private:
-			jthread _thread;
-			sync_queue<task>& _task_list;
-			condition_variable _idle_cv;
-			mutex _idle_mtx;
-			atomic_bool _idle{false};
-			atomic_u64 _average_get_work_cost{0};
+			thread _thread;
+			atomic_bool _busy{false};
+			atomic_u64& _counter;
+			sync_queue<task> _tasks;
 		};
+
 	}  // namespace detail
 
 	class thread_pool {
-
-	   public:
-		using ExpansionStrategy =
-			func<u32(const u64 /*max_tasks*/, const u64 /*current_tasks*/, const u64 /*current_threads*/)>;
-
 	   public:
 		thread_pool() = default;
 		~thread_pool() { shutdown(); }
 
-		void startup(const u64 thread_count, const u64 max_task_count, ExpansionStrategy&& expansion_strategy) {
-			if (_startup) return;
-			_max_task_count		= !max_task_count ? 99 : max_task_count;
-			_expansion_strategy = expansion_strategy;
+		void startup(const u64 thread_count, const u64 max_task_count, const bool allow_expand = true) {
+			if (_start) return;
+			_max_task_count			= !max_task_count ? 999 : max_task_count;
+			_allow_expand			= allow_expand;
+			const auto create_count = !thread_count ? 1 : thread_count;
 
 			lock_guard lock(_worker_mtx);
-			for (u32 i = 0; i < thread_count; ++i) {
-				auto worker = make_unique<detail::worker>(_tasks);
-				worker->start();
-				_actived_workers.emplace_back(std::move(worker));
-			}
-			_startup = true;
+			for (u64 i = 0; i < create_count; ++i)
+				_workers.emplace_back(move(make_unique<detail::worker>(_stop_source.get_token(), _curr_task_count)));
+			_start = true;
 		}
 
 		void shutdown() {
-			if (!_startup) return;
-			lock_guard lock(_worker_mtx);
-			for (auto& work : _actived_workers)
-				work->stop();
-			for (auto& work : _idle_workers)
-				work->stop();
-			_actived_workers.clear();
-			_idle_workers.clear();
-			_startup = false;
+			if (!_start) return;
+			_stop_source.request_stop();
+			//wait worker's thread join finished
+			_workers.clear();
+			_start = false;
 		}
 
 		template <typename Func, typename... Args>
-		bool publish(Func&& func, Args&&... args) {
-			if (!_startup) return false;
-			if (_tasks.size() >= _max_task_count) {
-				if (!_Expand()) return false;
-			}
-			else if (_tasks.size() < _max_task_count / 5) {
-				_Shrink();
-			}
+		bool submit(Func&& func, Args&&... args) {
+			if (!_start) return false;
+
 			detail::task task;
 			task.function = [f = std::forward<Func>(func), ... args_captured = std::forward<Args>(args)]() mutable {
 				try {
 					f(args_captured...);
-				}catch(...){}
+				} catch (...) {}
 			};
-			return _tasks.push(std::move(task));
+
+			lock_guard lock(_worker_mtx);
+			if (_curr_task_count > _max_task_count) return false;
+
+			for (auto& worker : _workers) {
+				if (!worker->is_busy()) {
+					worker->push_task(move(task));
+					return true;
+				}
+			}
+			//no worker's idle
+			const auto max_thread_count = thread::hardware_concurrency() * 2;
+			if (!_allow_expand || _workers.size() + 1 > max_thread_count) {
+				//cant create worker anymore, routuer task to randmon worker
+				_workers.at(random<u64>(0, _workers.size() - 1))->push_task(move(task));
+			}
+			else {
+				auto new_worker = make_unique<detail::worker>(_stop_source.get_token(), _curr_task_count);
+				new_worker->push_task(move(task));
+				_workers.emplace_back(move(new_worker));
+			}
+			return true;
 		}
 
 		template <typename Func, typename... Args>
@@ -159,72 +149,21 @@ namespace ema {
 				}
 			};
 
-			if (!publish(std::move(task)))
-				promise_ptr->set_exception(std::make_exception_ptr(std::runtime_error("publish task failed")));
-
+			if (!submit(move(task)))
+				promise_ptr->set_exception(std::make_exception_ptr(std::runtime_error("submit task failed")));
 			return future_result;
 		}
 
-	   private:
-		bool _Expand() {
-			lock_guard lock(_worker_mtx);
-			
-			u64 new_thread_count = _expansion_strategy 
-				? _expansion_strategy(_max_task_count, _tasks.size(), _actived_workers.size()) 
-				: 1;
-			
-			if (new_thread_count == 0) return false;
-			
-			u64 max_threads = std::thread::hardware_concurrency() * 2 - 1;
-			u64 available_slots = _actived_workers.size() < max_threads 
-				? max_threads - _actived_workers.size() 
-				: 0;
-			
-			new_thread_count = std::min(new_thread_count, available_slots);
-			if (new_thread_count == 0) return false;
-			
-			u64 to_create = new_thread_count;
-			while (!_idle_workers.empty() && to_create > 0) {
-				auto worker = std::move(_idle_workers.back());
-				_idle_workers.pop_back();
-				worker->active();
-				_actived_workers.emplace_back(std::move(worker));
-				to_create--;
-			}
-			
-			for (u64 i = 0; i < to_create; ++i) {
-				auto worker = make_unique<detail::worker>(_tasks);
-				worker->start();
-				_actived_workers.emplace_back(std::move(worker));
-			}
-			return true;
-		}
-
-		void _Shrink() {
-			lock_guard lock(_worker_mtx);
-			for (auto it = _actived_workers.begin(); it != _actived_workers.end();) {
-				//make sure at least one worker is active, the first one.
-				if (it == _actived_workers.begin())  {
-					it++;
-					continue;
-				}
-				auto& worker = *it;
-				if (worker->average_get_work_cost() > 60 * 1000) {
-					worker->idle();
-					_idle_workers.emplace_back(std::move(worker));
-					it = _actived_workers.erase(it);
-				}
-				else it++;
-			}
-		}
+		inline u64 get_curr_task_count() const { return _curr_task_count; }
+		inline u64 get_max_task_count() const { return _max_task_count; }
 
 	   private:
-		atomic_bool _startup{false};
+		atomic_bool _allow_expand{true};
+		atomic_bool _start{false};
+		atomic_u64 _curr_task_count{0};
 		atomic_u64 _max_task_count{0};
-		ExpansionStrategy _expansion_strategy;
 		mutex _worker_mtx;
-		vector<detail::worker::ptr> _actived_workers;
-		vector<detail::worker::ptr> _idle_workers;
-		sync_queue<detail::task> _tasks;
+		vector<detail::worker::ptr> _workers;
+		stop_source _stop_source;
 	};
 }  // namespace ema

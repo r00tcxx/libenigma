@@ -8,7 +8,7 @@
 #include <tlhelp32.h>
 #endif
 
-using namespace enigma;
+using namespace ema;
 
 class TestProcess : public testing::Test {
    public:
