@@ -23,42 +23,35 @@
 #include "types.h"
 
 namespace ema::log {
-	enum class log_level : int { debug, info, warn, error, fatal };
+	enum class log_level : int { trace, trace_error, debug, info, warn, error, fatal };
 
 	class message : public no_cmable {
 	   public:
-		message(const log_level lvl, const u64 time, const u64 thread, const bytes file, const i32 line, const bytes modlue,
-				string&& msg) noexcept
-			: lvl_(lvl), time_(time), thread_(thread), file_(file), line_(line), module_(modlue), msg_(std::move(msg)) {}
+		message(const log_level lvl, const u64 time, const u64 thread, const char* modlue, string&& msg) noexcept
+			: _lvl(lvl), _time(time), _thread(thread), _module(modlue), _msg(std::move(msg)) {}
 		message(message&& other) noexcept { operator=(std::move(other)); }
 		~message() = default;
 
 		message& operator=(message&& other) noexcept {
-			lvl_	= other.lvl_;
-			time_	= other.time_;
-			thread_ = other.thread_;
-			file_	= other.file_;
-			line_	= other.line_;
-			module_ = other.module_;
-			msg_	= std::move(other.msg_);
+			_lvl	= other._lvl;
+			_time	= other._time;
+			_thread = other._thread;
+			_module = other._module;
+			_msg	= std::move(other._msg);
 			return *this;
 		}
 
-		inline log_level level() const { return lvl_; }
-		inline u64 timestamp() const { return time_; }
-		inline u64 thread() const { return thread_; }
-		inline const string& content() const { return msg_; }
-		inline const bytes file() const { return file_; }
-		inline i32 line() const { return line_; }
-		inline const bytes module() const { return module_; }
+		inline log_level level() const { return _lvl; }
+		inline u64 timestamp() const { return _time; }
+		inline u64 thread() const { return _thread; }
+		inline const string& content() const { return _msg; }
+		inline const char* module() const { return _module; }
 
 	   private:
-		log_level lvl_;
-		bytes module_;
-		u64 time_;
-		u64 thread_;
-		string msg_;
-		bytes file_;
-		i32 line_;
+		log_level _lvl;
+		const char* _module;
+		u64 _time;
+		u64 _thread;
+		string _msg;
 	};
-}  // namespace enigma::log
+}  // namespace ema::log

@@ -21,11 +21,12 @@
 #pragma once
 #include <atomic>
 #include <condition_variable>
+#include <future>
 #include <mutex>
 #include <shared_mutex>
 #include <stop_token>
 #include <thread>
-#include <future>
+
 namespace ema {
 	using thread			 = std::thread;
 	using jthread			 = std::jthread;
@@ -34,9 +35,9 @@ namespace ema {
 	using condition_variable = std::condition_variable;
 	using mutex				 = std::mutex;
 	using shared_mutex		 = std::shared_mutex;
-	using atomic_bool = std::atomic_bool;
-	using atomic_u32  = std::atomic_uint32_t;
-	using atomic_u64  = std::atomic_uint64_t;
+	using atomic_bool		 = std::atomic_bool;
+	using atomic_u32		 = std::atomic_uint32_t;
+	using atomic_u64		 = std::atomic_uint64_t;
 
 	template <typename T>
 	using unique_lock = std::unique_lock<T>;

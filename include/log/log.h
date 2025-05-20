@@ -22,8 +22,27 @@
 #include "clock.h"
 #include "format.h"
 #include "native/process.h"
-#include "singleton.h"
 #include "sink.h"
+
+#define LOG_DECLARE(Level)                                                                                           \
+	template <typename... Args>                                                                                      \
+	void Level(string_view format, Args&&... args) {                                                                 \
+		auto s = vformat(format, make_format_args(args...));                                                         \
+		log_it(message(log_level::##Level, now<seconds>(), native::process::get_current_thread_id(), nullptr,        \
+					   std::move(s)));                                                                               \
+	}                                                                                                                \
+	template <typename... Args>                                                                                      \
+	void Level##_specific(const char* m, string_view format, Args&&... args) {                                       \
+		auto s = vformat(format, make_format_args(args...));                                                         \
+		log_it(                                                                                                      \
+			message(log_level::##Level, now<seconds>(), native::process::get_current_thread_id(), m, std::move(s))); \
+	}
+
+#define LOG_SPECIFIC(Level)                                                \
+	template <typename... Args>                                            \
+	void Level(string_view format, Args&&... args) {                       \
+		log::Level##_specific(name_, format, std::forward<Args>(args)...); \
+	}
 
 namespace ema::log {
 	bool init_logger(const log_level lvl, std::vector<sink::ptr>&& sinks);
@@ -37,140 +56,26 @@ namespace ema::log {
 	* Since we're using the fmt library, 
 	* we don't need to worry about memory allocation issues—the fmt library handles it automatically.
 	*/
-	template <typename... Args>
-	void debug(string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::debug, now<minseconds>(), native::process::get_current_thread_id(), nullptr, 0,
-					   nullptr, std::move(s)));
-	}
-
-	template <typename... Args>
-	void debug(const char* file, const int line, string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::debug, now<minseconds>(), native::process::get_current_thread_id(), file, line,
-					   nullptr, std::move(s)));
-	}
-
-	template <typename... Args>
-	void debug_specific(const char* m, string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::debug, now<minseconds>(), native::process::get_current_thread_id(), nullptr, 0, m,
-					   std::move(s)));
-	}
-
-	template <typename... Args>
-	void info(string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::info, now<minseconds>(), native::process::get_current_thread_id(), nullptr, 0,
-					   nullptr, std::move(s)));
-	}
-
-	template <typename... Args>
-	void info(const char* file, const int line, string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::info, now<minseconds>(), native::process::get_current_thread_id(), file, line,
-					   nullptr, std::move(s)));
-	}
-
-	template <typename... Args>
-	void info_specific(const char* m, string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::info, now<minseconds>(), native::process::get_current_thread_id(), nullptr, 0, m,
-					   std::move(s)));
-	}
-
-	template <typename... Args>
-	void warn(string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::warn, now<minseconds>(), native::process::get_current_thread_id(), nullptr, 0,
-					   nullptr, std::move(s)));
-	}
-
-	template <typename... Args>
-	void warn(const char* file, const int line, string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::warn, now<minseconds>(), native::process::get_current_thread_id(), file, line,
-					   nullptr, std::move(s)));
-	}
-
-	template <typename... Args>
-	void warn_specific(const char* m, string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::warn, now<minseconds>(), native::process::get_current_thread_id(), nullptr, 0, m,
-					   std::move(s)));
-	}
-
-	template <typename... Args>
-	void error(string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::error, now<minseconds>(), native::process::get_current_thread_id(), nullptr, 0,
-					   nullptr, std::move(s)));
-	}
-
-	template <typename... Args>
-	void error(const char* file, const int line, string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::error, now<minseconds>(), native::process::get_current_thread_id(), file, line,
-					   nullptr, std::move(s)));
-	}
-
-	template <typename... Args>
-	void error_specific(const char* m, string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::error, now<minseconds>(), native::process::get_current_thread_id(), nullptr, 0, m,
-					   std::move(s)));
-	}
-
-	template <typename... Args>
-	void fatal(string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::fatal, now<minseconds>(), native::process::get_current_thread_id(), nullptr, 0,
-					   nullptr, std::move(s)));
-	}
-
-	template <typename... Args>
-	void fatal(const char* file, const int line, string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::fatal, now<minseconds>(), native::process::get_current_thread_id(), file, line,
-					   nullptr, std::move(s)));
-	}
-
-	template <typename... Args>
-	void fatal_specific(const char* m, string_view format, Args&&... args) {
-		auto s = vformat(format, make_format_args(args...));
-		log_it(message(log_level::fatal, now<minseconds>(), native::process::get_current_thread_id(), nullptr, 0, m,
-					   std::move(s)));
-	}
+	LOG_DECLARE(debug);
+	LOG_DECLARE(info);
+	LOG_DECLARE(warn);
+	LOG_DECLARE(error);
+	LOG_DECLARE(fatal);
+	LOG_DECLARE(trace);
+	LOG_DECLARE(trace_error);
 
 	class specific_logger {
 	   public:
 		specific_logger(const char* name) : name_(name) {}
 		~specific_logger() = default;
 
-		template <typename... Args>
-		void debug(string_view format, Args&&... args) {
-			log::debug_specific(name_, format, std::forward<Args>(args)...);
-		}
-
-		template <typename... Args>
-		void info(string_view format, Args&&... args) {
-			log::info_specific(name_, format, std::forward<Args>(args)...);
-		}
-
-		template <typename... Args>
-		void warn(string_view format, Args&&... args) {
-			log::warn_specific(name_, format, std::forward<Args>(args)...);
-		}
-
-		template <typename... Args>
-		void error(string_view format, Args&&... args) {
-			log::error_specific(name_, format, std::forward<Args>(args)...);
-		}
-
-		template <typename... Args>
-		void fatal(string_view format, Args&&... args) {
-			log::fatal_specific(name_, format, std::forward<Args>(args)...);
-		}
+		LOG_SPECIFIC(debug);
+		LOG_SPECIFIC(info);
+		LOG_SPECIFIC(warn);
+		LOG_SPECIFIC(error);
+		LOG_SPECIFIC(fatal);
+		LOG_SPECIFIC(trace);
+		LOG_SPECIFIC(trace_error);
 
 	   private:
 		const char* name_;

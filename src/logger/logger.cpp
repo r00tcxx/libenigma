@@ -25,35 +25,35 @@ namespace ema::log {
 
 	bool logger::init(const log_level lvl, std::vector<sink::ptr>&& sinks) {
 		if (sinks.empty()) return false;
-		sinks_ = std::move(sinks);
-		lvl_   = lvl;
+		_sinks = std::move(sinks);
+		_lvl   = lvl;
 
 		bool all_success{true};
-		for (auto& sink : sinks_)
+		for (auto& sink : _sinks)
 			all_success &= sink->init();
 		if (!all_success) return false;
 
-		thread_ = std::jthread([this](std::stop_token token) {
+		_thread = std::jthread([this](std::stop_token token) {
 			while (!token.stop_requested()) {
-				auto msg = queue_.pop();
+				auto msg = _queue.pop();
 				if (!msg.has_value()) continue;
-				for (auto& sink : sinks_)
-					sink->log(lvl_, msg.value());
+				for (auto& sink : _sinks)
+					sink->log(_lvl, msg.value());
 			}
 		});
 		return true;
 	}
 
 	void logger::uninit() {
-		queue_.stop();
-		thread_.request_stop();
-		thread_.join();
-		for (auto& sink : sinks_)
+		_queue.stop();
+		_thread.request_stop();
+		_thread.join();
+		for (auto& sink : _sinks)
 			sink->uninit();
 	}
 
 	void logger::log_it(message&& msg) {
-		queue_.push(std::move(msg));
+		_queue.push(std::move(msg));
 	}
 
 }  // namespace ema::log

@@ -42,6 +42,18 @@ namespace ema {
 			return result;
 		}
 
+		bool publish(const string& type_name, any&& any, func<void()>&& ack_callback = nullptr) {
+			lock_guard lock(_mutex);
+			bool result{false};
+			for (auto& handler : _handlers) {
+				if (handler->_has_type(type_name)) {
+					handler->_deliver(detail::event{.type = type_name, .ev = move(any), .ack = ack_callback});
+					result = true;
+				}
+			}
+			return result;
+		}
+
 		bool subscribe(event_handler::ptr handler) {
 			if (!handler) return false;
 			lock_guard lock(_mutex);

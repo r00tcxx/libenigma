@@ -1,14 +1,13 @@
 #pragma once
 #include <fstream>
 #include <map>
-#include <memory>
 #include "log/sink.h"
 #include "log_file.h"
 
 namespace ema::log {
 	class file_sink : public sink {
 	   public:
-		file_sink(file_sink_config&& config) : config_(std::move(config)) {}
+		file_sink(file_sink_config&& config) : _config(std::move(config)) {}
 		~file_sink() {}
 		bool init() override;
 		void uninit() override;
@@ -19,7 +18,7 @@ namespace ema::log {
 		bool routing_logs();
 
 	   private:
-		file_sink_config config_;
-		log_file::ptr file_;
+		file_sink_config _config;
+		log_file::ptr _file;
 	};
 }  // namespace ema::log

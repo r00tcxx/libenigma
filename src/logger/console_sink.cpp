@@ -1,6 +1,5 @@
 #include "console_sink.h"
 #include <iostream>
-#include "clock.h"
 #include "format.h"
 
 #ifdef _WIN32
@@ -42,27 +41,35 @@ namespace ema::log {
 		std::cout << prefix << " [";
 		switch (msg.level()) {
 			case log_level::debug:
-				if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::green);
+				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::green);
 				std::cout << "DEBUG";
 				break;
 			case log_level::info:
-				if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::blue);
+				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::blue);
 				std::cout << "INFO";
 				break;
 			case log_level::warn:
-				if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::yellow);
+				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::yellow);
 				std::cout << "WARN";
 				break;
 			case log_level::error:
-				if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::red);
+				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::red);
 				std::cout << "ERROR";
 				break;
 			case log_level::fatal:
-				if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::red);
+				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::red);
 				std::cout << "FATAL";
 				break;
+			case log_level::trace:
+				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::magenta);
+				std::cout << "TRACE";
+				break;
+			case log_level::trace_error:
+				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::red);
+				std::cout << "TRACE ERROR";
+				break;
 		}
-		if (config_.color) SetConsoleTextAttribute(std_handle, (WORD)color::white);
+		if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::white);
 		std::cout << "] ";
 		if (msg.module()) std::cout << "[" << msg.module() << "]";
 		std::cout << "> " << msg.content() << std::endl;

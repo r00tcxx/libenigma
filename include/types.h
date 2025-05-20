@@ -78,7 +78,7 @@ namespace ema {
 	using queue = std::queue<T>;
 
 	template <typename T>
-	using sharde_ptr = std::shared_ptr<T>;
+	using shared_ptr = std::shared_ptr<T>;
 
 	template <typename T, typename D = std::default_delete<T>>
 	using unique_ptr = std::unique_ptr<T, D>;

@@ -1,2 +1,2 @@
 ﻿#pragma once 
-#define LIB_ENIGMA_VERSION "1.0.7.9ff68b3"
+#define LIB_ENIGMA_VERSION "1.0.0.76a85e8"

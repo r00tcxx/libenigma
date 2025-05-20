@@ -18,10 +18,10 @@ namespace ema::log {
 		logger() = default;
 
 	   private:
-		sync_queue<message> queue_;
-		vector<sink::ptr> sinks_;
-		jthread thread_;
-		log_level lvl_;
+		sync_queue<message> _queue;
+		vector<sink::ptr> _sinks;
+		jthread _thread;
+		log_level _lvl;
 	};
 
 }  // namespace ema::log

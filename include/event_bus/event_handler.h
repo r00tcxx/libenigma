@@ -40,7 +40,7 @@ namespace ema {
 		friend event_bus;
 
 	   public:
-		using ptr = sharde_ptr<event_handler>;
+		using ptr = shared_ptr<event_handler>;
 
 	   public:
 		event_handler()	 = default;
@@ -48,19 +48,18 @@ namespace ema {
 
 		inline void start() {
 			if (_start) return;
-			_thread = jthread(
-				[this](stop_token stop_token) {
-					while (!stop_token.stop_requested()) {
-						auto event_opt = _events.pop();
-						if (!event_opt.has_value()) continue;
-						lock_guard lock(_mutex);
-						auto& event = event_opt.value();
-						auto it		= _event_handles.find(event.type);
-						if (it == _event_handles.end()) continue;
-						it->second(event);
-					}
-				});
-			_start = true;
+			_thread = jthread([this](stop_token stop_token) {
+				while (!stop_token.stop_requested()) {
+					auto event_opt = _events.pop();
+					if (!event_opt.has_value()) continue;
+					lock_guard lock(_mutex);
+					auto& event = event_opt.value();
+					auto it		= _event_handles.find(event.type);
+					if (it == _event_handles.end()) continue;
+					it->second(event);
+				}
+			});
+			_start	= true;
 		}
 
 		inline void stop() {
@@ -73,19 +72,32 @@ namespace ema {
 		}
 
 		template <detail::msg_t T>
-		inline void on(func<void(const T)>&& callback) {
-			if (!callback) return;
+		inline bool on(func<void(const T&)>&& callback) {
+			if (!callback) return false;
 			string type_name = typeid(T).name();
 			lock_guard lock(_mutex);
 			if (auto it = _event_handles.find(type_name); it == _event_handles.end()) {
-				_event_handles.emplace(type_name, [callback = std::forward<decltype(callback)>(callback)](detail::event event) {
-					try {
-						auto target_event = any_cast<T>(event.ev);
-						if (callback) callback(target_event);
-						if (event.ack) event.ack();
-					} catch (...) {}
-				});
+				_event_handles.emplace(type_name,
+									   [callback = std::forward<decltype(callback)>(callback)](detail::event event) {
+										   try {
+											   auto target_event = any_cast<T>(event.ev);
+											   if (callback) callback(target_event);
+											   if (event.ack) event.ack();
+										   } catch (...) {}
+									   });
+				return true;
 			}
+			return false;
+		}
+
+		inline bool on_type(const string& type, func<void(detail::event)>&& callback) {
+			if (type.empty() || !callback) return false;
+			lock_guard lock(_mutex);
+			if (auto it = _event_handles.find(type); it == _event_handles.end()) {
+				_event_handles.emplace(type, callback);
+				return true;
+			}
+			return false;
 		}
 
 		template <detail::msg_t T>
