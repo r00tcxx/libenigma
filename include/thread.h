@@ -21,7 +21,7 @@
 #pragma once
 #include <atomic>
 #include <condition_variable>
-#include <future>
+#include <memory>
 #include <mutex>
 #include <shared_mutex>
 #include <stop_token>
@@ -40,14 +40,12 @@ namespace ema {
 	using atomic_u64		 = std::atomic_uint64_t;
 
 	template <typename T>
+	using atomic_shared_ptr = std::atomic<std::shared_ptr<T>>;
+
+	template <typename T>
 	using unique_lock = std::unique_lock<T>;
 
 	template <typename T>
 	using lock_guard = std::lock_guard<T>;
 
-	template <typename T>
-	using future = std::future<T>;
-
-	template <typename T>
-	using promise = std::promise<T>;
 }  // namespace ema

@@ -1,141 +1,124 @@
 #pragma once
+#include "thread.h"
 #include "types.h"
 
 namespace ema {
+	template <typename T>
+	concept promise_type = std::is_move_constructible_v<T> && std::is_move_assignable_v<T>;
+
+	namespace detail {
+		template <typename F, typename S>
+			requires promise_type<F> && promise_type<S>
+		class _shared_state : public NoCopyableNoMoveable {
+		   public:
+			_shared_state()	 = default;
+			~_shared_state() = default;
+
+			inline void set_fail(F&& v) {
+				_s_func = move(v);
+			}
+
+			inline set_success(S&& v) {
+				_f_func = move(v);
+			}
+
+			inline void set_result(std::variant<F, S>&& v) {
+			}
+
+			inline bool is_finished() {
+				return _result.has_value();
+			}
+
+		   private:
+			optional<variant<F, S>> _result;
+			func<void(S&&)> _s_func{nullptr};
+			func<void(F&&)> _f_func{nullptr};
+		};
+
+		template <typename F, typename S>
+			requires promise_type<F> && promise_type<S>
+		using _shared_state_ptr = shared_ptr<_shared_state<F, S>>
+	}  // namespace detail
+
 	template <typename F, typename S>
-	class async : public no_copyable {
+		requires promise_type<F> && promise_type<S>
+	class future {
+		template <typename F1, typename S1>
+			requires promise_type<F1> && promise_type<S1>
+		friend class promise;
+
 	   public:
-		using failed_callback  = func<void(F&&)>;
-		using success_callback = func<void(S&&)>;
+		using type = future<F, S>;
 
-		async()							   = default;
-		async(async&&) noexcept			   = default;
-		async& operator=(async&&) noexcept = default;
-
-		template <typename T>
-		void failed(T&& v) {
-			if (_failed) _failed(std::forward<T>(v));
+	   public:
+		inline future(type&& other) {
+			_state		 = other._state;
+			other._state = nullptr;
 		}
 
-		template <typename T>
-		void successed(T&& v) {
-			if (_successed) _successed(std::forward<T>(v));
+		inline future(const type& other) {
+			_state = other._state;
 		}
 
-		async& on_failed(failed_callback cb) {
-			_failed = std::move(cb);
+		inline type& operator=(type&& other) {
+			if (this != &other) {
+				_state		 = other._state;
+				other._state = nullptr;
+			}
 			return *this;
 		}
 
-		async& on_successed(success_callback cb) {
-			_successed = std::move(cb);
+		inline type& operator=(const type& other) {
+			if (this != &other) {
+				_state = other._state;
+			}
 			return *this;
+		}
+
+		~future() {
+		}
+
+		inline type& then(func<void(S&&)>&& callback) {
+			if (callback) _state->set_success(move(callback));
+			return *this;
+		}
+
+		inline type& failed(func<void(F&&)>&& callback) {
+			if (callback) _state->set_fail(move(callback));
+			return *this;
+		}
+
+		inline bool is_finished() {
+			return _state->is_finished();
 		}
 
 	   private:
-		failed_callback _failed{nullptr};
-		success_callback _successed{nullptr};
-	};
-
-	template <typename F>
-	class async<F, void> : public no_copyable {
-	   public:
-		using failed_callback  = func<void(F&&)>;
-		using success_callback = func<void()>;
-
-		async()							   = default;
-		async(async&&) noexcept			   = default;
-		async& operator=(async&&) noexcept = default;
-
-		template <typename T>
-		void failed(T&& v) {
-			if (_failed) _failed(std::forward<T>(v));
-		}
-
-		void successed() {
-			if (_successed) _successed();
-		}
-
-		async& on_failed(failed_callback cb) {
-			_failed = std::move(cb);
-			return *this;
-		}
-
-		async& on_successed(success_callback cb) {
-			_successed = std::move(cb);
-			return *this;
+		future(detail::_shared_state_ptr state) : _state(state) {
+			if (!_state) throw std::runtime_error("bad shared state");
 		}
 
 	   private:
-		failed_callback _failed{nullptr};
-		success_callback _successed{nullptr};
+		detail::_shared_state_ptr _state{nullptr};
 	};
 
-	template <typename S>
-	class async<void, S> : public no_copyable {
+	template <typename F, typename S>
+	class promise : public no_copyable {
 	   public:
-		using failed_callback  = func<void()>;
-		using success_callback = func<void(S&&)>;
-
-		async()							   = default;
-		async(async&&) noexcept			   = default;
-		async& operator=(async&&) noexcept = default;
-
-		void failed() {
-			if (_failed) _failed();
+		promise() : _state(make_shared<detail::_shared_promise_state>()) {
+		}
+		promise(promise&& other) {
+		}
+		~promise() {
 		}
 
-		template <typename T>
-		void successed(T&& v) {
-			if (_successed) _successed(std::forward<T>(v));
+		future<F, S> get_future();
+		inline void set_failed(F&& v) {
 		}
-
-		async& on_failed(failed_callback cb) {
-			_failed = std::move(cb);
-			return *this;
-		}
-
-		async& on_successed(success_callback cb) {
-			_successed = std::move(cb);
-			return *this;
+		inline void set_success(S&& v) {
 		}
 
 	   private:
-		failed_callback _failed{nullptr};
-		success_callback _successed{nullptr};
+		shared_ptr<detail::_shared_promise_state<F, S>> _state;
 	};
 
-	// 特化模板：F 是 void，S 是 void
-	template <>
-	class async<void, void> : public no_copyable {
-	   public:
-		using failed_callback  = func<void()>;
-		using success_callback = func<void()>;
-
-		async()							   = default;
-		async(async&&) noexcept			   = default;
-		async& operator=(async&&) noexcept = default;
-
-		void failed() {
-			if (_failed) _failed();
-		}
-
-		void successed() {
-			if (_successed) _successed();
-		}
-
-		async& on_failed(failed_callback cb) {
-			_failed = std::move(cb);
-			return *this;
-		}
-
-		async& on_successed(success_callback cb) {
-			_successed = std::move(cb);
-			return *this;
-		}
-
-	   private:
-		failed_callback _failed{nullptr};
-		success_callback _successed{nullptr};
-	};
 }  // namespace ema

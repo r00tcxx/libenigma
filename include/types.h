@@ -19,18 +19,19 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
+#include <algorithm>
+#include <any>
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <queue>
+#include <random>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <variant>
 #include <vector>
-#include <optional>
-#include <any>
-#include <random>
-#include <algorithm>
 #include "class.h"
 #include "singleton.h"
 #include "string/str.h"
@@ -38,7 +39,9 @@
 namespace std {
 	template <>
 	struct hash<ema::string> {
-		std::size_t operator()(const ema::string& s) const noexcept { return std::hash<std::string>()(s); }
+		std::size_t operator()(const ema::string& s) const noexcept {
+			return std::hash<std::string>()(s);
+		}
 	};
 }  // namespace std
 
@@ -55,9 +58,12 @@ namespace ema {
 	using f64	= double;
 	using byte	= char;
 	using bytes = char*;
-	using any = std::any;
+	using any	= std::any;
 
 	using std::any_cast;
+
+	template <typename T1, typename T2>
+	using variant = std::variant<T1, T2>;
 
 	template <typename T>
 	using vector = std::vector<T>;
@@ -83,10 +89,10 @@ namespace ema {
 	template <typename T, typename D = std::default_delete<T>>
 	using unique_ptr = std::unique_ptr<T, D>;
 
+	using std::forward;
 	using std::make_shared;
 	using std::make_unique;
 	using std::move;
-	using std::forward;
 
 	template <typename T>
 	using func = std::function<T>;
@@ -98,16 +104,15 @@ namespace ema {
 
 	using err = std::pair<bool, string>;
 
-	template<typename T>
+	template <typename T>
 	using result = std::pair<bool, optional<T>>;
 
 	inline constexpr nullopt_t nil = nullopt_t{nullopt_t::_Tag{}};
 
-
-	template<typename T>
+	template <typename T>
 	inline T random(const T from, const T to) {
 		std::random_device rd;
 		std::mt19937 gen(rd());
 		return std::uniform_int_distribution<u64>(from, to)(gen);
 	}
-}  // namespace EMA
+}  // namespace ema
