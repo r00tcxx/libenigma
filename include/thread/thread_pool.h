@@ -19,6 +19,7 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
+#include <future>
 #include "../sync_queue.h"
 #include "../types.h"
 
@@ -53,8 +54,12 @@ namespace ema {
 				if (_thread.joinable()) _thread.join();
 			}
 
-			inline bool is_busy() const { return _busy; }
-			inline auto get_task_count() { return _tasks.size(); }
+			inline bool is_busy() const {
+				return _busy;
+			}
+			inline auto get_task_count() {
+				return _tasks.size();
+			}
 			inline void push_task(task&& task) {
 				_counter++;
 				_tasks.push(move(task));
@@ -72,7 +77,9 @@ namespace ema {
 	class thread_pool {
 	   public:
 		thread_pool() = default;
-		~thread_pool() { shutdown(); }
+		~thread_pool() {
+			shutdown();
+		}
 
 		void startup(const u64 thread_count, const u64 max_task_count, const bool allow_expand = true) {
 			if (_start) return;
@@ -129,9 +136,9 @@ namespace ema {
 		}
 
 		template <typename Func, typename... Args>
-		auto exec(Func&& func, Args&&... args) -> future<std::invoke_result_t<Func, Args...>> {
+		auto exec(Func&& func, Args&&... args) -> std::future<std::invoke_result_t<Func, Args...>> {
 			using return_type  = std::invoke_result_t<Func, Args...>;
-			auto promise_ptr   = std::make_shared<promise<return_type>>();
+			auto promise_ptr   = std::make_shared<std::promise<return_type>>();
 			auto future_result = promise_ptr->get_future();
 
 			auto task = [promise_ptr, f = std::forward<Func>(func),
@@ -154,8 +161,12 @@ namespace ema {
 			return future_result;
 		}
 
-		inline u64 get_curr_task_count() const { return _curr_task_count; }
-		inline u64 get_max_task_count() const { return _max_task_count; }
+		inline u64 get_curr_task_count() const {
+			return _curr_task_count;
+		}
+		inline u64 get_max_task_count() const {
+			return _max_task_count;
+		}
 
 	   private:
 		atomic_bool _allow_expand{true};

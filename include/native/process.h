@@ -19,13 +19,13 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#include "../types.h"
+#include <string>
 
 namespace ema::native::process {
-	string get_proc_name();
-	string get_proc_path();
-	string get_proc_dir();
-	u32 get_proc_id();
-	u32 get_proc_by_name(const string& name);
-	u64 get_current_thread_id();
-}  // namespace enigma::native::process
+	std::string GetProcName();
+	std::string GetProcPath();
+	std::string GetProcDir();
+	unsigned int GetProcID();
+	unsigned int GetProcByName(const std::string& name);
+	std::size_t GetCurrentThreadID();
+}  // namespace ema::native::process

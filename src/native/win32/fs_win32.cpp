@@ -4,9 +4,10 @@
 #include <Windows.h>
 #include <shellapi.h>
 #include <shlobj.h>
+#include "string/str.h"
 
 namespace ema::native::fs {
-	HANDLE get_user_session_token() {
+	HANDLE GetUserSessionToken() {
 		HANDLE token{INVALID_HANDLE_VALUE};
 		if (!OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY, &token))
 			return token;
@@ -18,11 +19,11 @@ namespace ema::native::fs {
 		return token;
 	}
 
-	string get_standard_path(const GUID guid) {
+	std::string GetStandardPath(const GUID guid) {
 		wchar_t* buffer{nullptr};
-		auto token = get_user_session_token();
+		auto token = GetUserSessionToken();
 		if (S_OK == SHGetKnownFolderPath(guid, 0, token, &buffer)) {
-			string path = string::from_wstring(buffer);
+			String path = String::from_wstring(buffer);
 			path.replace("\\", "/");
 			CoTaskMemFree(buffer);
 			CloseHandle(token);
@@ -31,32 +32,32 @@ namespace ema::native::fs {
 		return "";
 	}
 
-	string get_program_data_path() {
-		return get_standard_path(FOLDERID_ProgramData);
+	std::string GetProgramDataPath() {
+		return GetStandardPath(FOLDERID_ProgramData);
 	}
 
-	string get_program_file_path() {
-		return get_standard_path(FOLDERID_ProgramFilesX64);
+	std::string GetProgramFilePath() {
+		return GetStandardPath(FOLDERID_ProgramFilesX64);
 	}
 
-	string get_tmp_path() {
+	std::string GetTmpPath() {
 		std::wstring buffer(MAX_PATH, 0);
 		GetTempPath(MAX_PATH, buffer.data());
 		if (buffer.empty()) return "";
-		auto u8 = string::from_wstring(buffer);
+		auto u8 = String::from_wstring(buffer);
 		u8.replace("\\", "/");
 		return u8;
 	}
 
-	bool exists(const string& path) {
+	bool Exists(const std::string& path) {
 		if (path.empty()) return false;
 		std::error_code ec;
-		return std::filesystem::exists(path.to_stdstring(), ec);
+		return std::filesystem::exists(path, ec);
 	}
 
-	bool create_directories(const string path) {
+	bool CreateDirecties(const std::string path) {
 		if (path.empty()) return false;
 		std::error_code ec;
-		return std::filesystem::create_directories(path.to_stdstring(), ec);
+		return std::filesystem::create_directories(path, ec);
 	}
 }  // namespace ema::native::fs

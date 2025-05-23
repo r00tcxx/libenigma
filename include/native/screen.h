@@ -19,31 +19,31 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#include "types.h"
+#include <string>
+#include <unordered_map>
 
 namespace ema::native::screen {
 #ifdef _WIN32
-	enum class taskbar_side {
-		unknown,
-		left,
-		top,
-		right,
-		bottom,
+	enum class TaskbarSide {
+		Unknown,
+		Left,
+		Top,
+		Right,
+		Bottom,
 	};
 #endif
 
-	struct screen_info {
-		string name;
-		i64 x;
-		i64 y;
-		i64 width;
-		i64 height;
-		u32 dpi{100};
+	struct ScreenInfo {
+		std::string name;
+		long long x;
+		long long y;
+		long long width;
+		long long height;
+		unsigned int dpi{100};
 		bool primary;
-
-		taskbar_side win32_taskbar_side{taskbar_side::unknown};
-		u32 win32_taskbar_height{0};
+		TaskbarSide win32_taskbar_side{TaskbarSide::Unknown};
+		unsigned int win32_taskbar_height{0};
 	};
 
-	hash_map<string, screen_info> get_screens();
-}  // namespace enigma::native::screen
+	std::unordered_map<std::string, ScreenInfo> GetScreens();
+}  // namespace ema::native::screen

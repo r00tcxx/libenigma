@@ -1,28 +1,30 @@
 #pragma once
-#include "db/sqlite3/sqlite3.h"
 #include "core/sqlite3.h"
+#include "db/sqlite3/sqlite3.h"
 
 namespace ema::db {
-	class sqlite3cpp::impl {
-public:
-		impl() = default;
-		~impl() { close(); }
-		sqlite3_result open(const string& db, const sqlite3_open_flags flags);
-		void close();
-		string error();
-		sqlite3_result begin();
-		sqlite3_result commit();
-		sqlite3_result rollback();
-		sqlite3_result exec(const string& sql, sqlite3_rows& rows);
-		sqlite3_result exec(const string& sql);
-		sqlite3_result prepare(const string& sql, sqlite3_context& ctx);
-		sqlite3_result bind_value(sqlite3_context& ctx, sqlite3_value&& value);
-		sqlite3_result bind_values(sqlite3_context& ctx, std::vector<sqlite3_value>&& values);
-		sqlite3_result step(sqlite3_context& ctx);
-		sqlite3_result step(sqlite3_context& ctx, sqlite3_columns& cols);
-		sqlite3_result finalize(sqlite3_context& ctx);
+	class Sqlite3cpp::Impl {
+	   public:
+		Impl() = default;
+		~Impl() {
+			Close();
+		}
+		Sqlite3Result Open(const std::string& db, const Sqlite3OpenFlags flags);
+		void Close();
+		std::string Error();
+		Sqlite3Result Begin();
+		Sqlite3Result Commit();
+		Sqlite3Result Rollback();
+		Sqlite3Result Exec(const std::string& sql, Sqlite3Rows& rows);
+		Sqlite3Result Exec(const std::string& sql);
+		Sqlite3Result Prepare(const std::string& sql, Sqlite3Context& ctx);
+		Sqlite3Result BindValue(Sqlite3Context& ctx, Sqlite3Value&& value);
+		Sqlite3Result BindValues(Sqlite3Context& ctx, std::vector<Sqlite3Value>&& values);
+		Sqlite3Result Step(Sqlite3Context& ctx);
+		Sqlite3Result Step(Sqlite3Context& ctx, Sqlite3Columns& cols);
+		Sqlite3Result Finalize(Sqlite3Context& ctx);
 
 	   private:
 		sqlite3* db_{nullptr};
 	};
-}
+}  // namespace ema::db

@@ -19,13 +19,13 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#include "types.h"
+#include <string>
 
 namespace ema::native::fs {
-	string get_program_data_path();
-	string get_program_file_path();
-	string get_tmp_path();
+	std::string GetProgramDataPath();
+	std::string GetProgramFilePath();
+	std::string GetTmpPath();
 
-	bool exists(const string& path);
-	bool create_directories(const string path);
-}	 // namespace enigma::native
+	bool Exists(const std::string& path);
+	bool CreateDirecties(const std::string path);
+}  // namespace ema::native::fs

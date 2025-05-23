@@ -1,14 +1,14 @@
 #pragma once
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include "bit_mask.h"
-#include "class.h"
-#include "types.h"
+#include "../../bit_mask.h"
+#include "../../class.h"
 
 namespace ema::db {
-	enum class sqlite3_open_flags : int {
+	enum class Sqlite3OpenFlags : int {
 		READ		   = 0x00000001,
 		READ_WRITE	   = 0x00000002,
 		CREATE		   = 0x00000004,
@@ -33,62 +33,62 @@ namespace ema::db {
 		EXRESCODE	   = 0x00200000,
 	};
 
-	BIT_MASK(sqlite3_open_flags);
+	BIT_MASK(Sqlite3OpenFlags);
 
-	struct sqlite3_blob {
+	struct Sqlite3Blob {
 		void* data{nullptr};
 		size_t size{0};
 
-		sqlite3_blob() = default;
-		sqlite3_blob(void* ptr, size_t sz) : data(ptr), size(sz) {}
+		Sqlite3Blob() = default;
+		Sqlite3Blob(void* ptr, size_t sz) : data(ptr), size(sz) {
+		}
 	};
 
-	using sqlite3_null	  = std::nullptr_t;
-	using sqlite3_value	  = std::variant<i64, double, std::string, sqlite3_blob, sqlite3_null>;
-	using sqlite3_columns = std::unordered_map<string, sqlite3_value>;
-	using sqlite3_rows	  = std::vector<sqlite3_columns>;
+	using Sqlite3Null	 = std::nullptr_t;
+	using Sqlite3Value	 = std::variant<long long, double, std::string, Sqlite3Blob, Sqlite3Null>;
+	using Sqlite3Columns = std::unordered_map<std::string, Sqlite3Value>;
+	using Sqlite3Rows	 = std::vector<Sqlite3Columns>;
 
-	using sqlite3_result = std::pair<bool, string>;
+	using Sqlite3Result = std::pair<bool, std::string>;
 
-	struct sqlite3_context {
+	struct Sqlite3Context {
 		void* ctx;
 		bool done{false};
 	};
 
-	class sqlite3cpp : no_copyable {
+	class Sqlite3cpp : public NoCopyableMoveable {
 	   public:
-		sqlite3cpp();
-		~sqlite3cpp();
+		Sqlite3cpp();
+		~Sqlite3cpp();
 
-		sqlite3_result open(const string& db, const sqlite3_open_flags flags);
-		void close();
-		string error();
-		sqlite3_result begin();
-		sqlite3_result commit();
-		sqlite3_result rollback();
-		sqlite3_result exec(const string& sql, sqlite3_rows& rows);
-		sqlite3_result exec(const string& sql);
-		sqlite3_result prepare(const string& sql, sqlite3_context& ctx);
-		sqlite3_result bind_value(sqlite3_context& ctx, sqlite3_value&& value);
-		sqlite3_result bind_values(sqlite3_context& ctx, std::vector<sqlite3_value>&& values);
-		sqlite3_result step(sqlite3_context& ctx);
-		sqlite3_result step(sqlite3_context& ctx, sqlite3_columns& cols);
-		sqlite3_result finalize(sqlite3_context& ctx);
+		Sqlite3Result Open(const std::string& db, const Sqlite3OpenFlags flags);
+		void Close();
+		std::string Error();
+		Sqlite3Result Begin();
+		Sqlite3Result Commit();
+		Sqlite3Result Rollback();
+		Sqlite3Result Exec(const std::string& sql, Sqlite3Rows& rows);
+		Sqlite3Result Exec(const std::string& sql);
+		Sqlite3Result Prepare(const std::string& sql, Sqlite3Context& ctx);
+		Sqlite3Result BindValue(Sqlite3Context& ctx, Sqlite3Value&& value);
+		Sqlite3Result BindValues(Sqlite3Context& ctx, std::vector<Sqlite3Value>&& values);
+		Sqlite3Result Step(Sqlite3Context& ctx);
+		Sqlite3Result Step(Sqlite3Context& ctx, Sqlite3Columns& cols);
+		Sqlite3Result Finalize(Sqlite3Context& ctx);
 
 		template <typename T>
-		sqlite3_value make_value(T&& val) {
+		Sqlite3Value MakeValue(T&& val) {
 			using DT = std::decay_t<T>;
-
-			if constexpr (std::is_convertible_v<DT, i64>) return static_cast<i64>(std::forward<T>(val));
+			if constexpr (std::is_convertible_v<DT, long long>) return static_cast<long long>(std::forward<T>(val));
 			else if constexpr (std::is_convertible_v<DT, double>) return static_cast<double>(std::forward<T>(val));
 			else if constexpr (std::is_convertible_v<DT, std::string>)
 				return static_cast<std::string>(std::forward<T>(val));
-			else if constexpr (std::is_convertible_v<DT, sqlite3_blob>) return std::forward<T>(val);
+			else if constexpr (std::is_convertible_v<DT, Sqlite3Blob>) return std::forward<T>(val);
 			else return nullptr;
 		}
 
 	   private:
-		class impl;
-		unique_ptr<impl> impl_;
+		class Impl;
+		std::unique_ptr<Impl> impl_;
 	};
-}  // namespace enigma::db
+}  // namespace ema::db

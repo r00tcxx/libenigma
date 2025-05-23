@@ -20,59 +20,59 @@ enum class color : WORD {
 #endif
 
 namespace ema::log {
-	bool console_sink::init() {
+	bool ConsoleSink::Init() {
 #ifdef _WIN32
 		std_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 		return true;
 #endif
 	}
 
-	void console_sink::uninit() {
+	void ConsoleSink::Uninit() {
 #ifdef _WIN32
 #endif
 	}
 
-	bool console_sink::log(const log_level lvl, const message& msg) {
-		if (static_cast<int>(msg.level()) < static_cast<int>(lvl)) return true;
+	bool ConsoleSink::Log(const LogLevel lvl, const Message& msg) {
+		if (static_cast<int>(msg.Level()) < static_cast<int>(lvl)) return true;
 
-		auto timestamp = format("{:%m-%d %H:%M:%S}", localtime(msg.timestamp()));
-		auto prefix	   = format("{}.{:03} [{}]", timestamp, msg.timestamp() % 1000, msg.thread());
+		auto timestamp = format("{:%m-%d %H:%M:%S}", localtime(msg.Timestamp()));
+		auto prefix	   = format("{}.{:03} [{}]", timestamp, msg.Timestamp() % 1000, msg.Thread());
 #ifdef _WIN32
 		std::cout << prefix << " [";
-		switch (msg.level()) {
-			case log_level::debug:
+		switch (msg.Level()) {
+			case LogLevel::Debug:
 				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::green);
 				std::cout << "DEBUG";
 				break;
-			case log_level::info:
+			case LogLevel::Info:
 				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::blue);
 				std::cout << "INFO";
 				break;
-			case log_level::warn:
+			case LogLevel::Warn:
 				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::yellow);
 				std::cout << "WARN";
 				break;
-			case log_level::error:
+			case LogLevel::Error:
 				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::red);
 				std::cout << "ERROR";
 				break;
-			case log_level::fatal:
+			case LogLevel::Fatal:
 				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::red);
 				std::cout << "FATAL";
 				break;
-			case log_level::trace:
+			case LogLevel::Trace:
 				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::magenta);
 				std::cout << "TRACE";
 				break;
-			case log_level::trace_error:
+			case LogLevel::TraceError:
 				if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::red);
 				std::cout << "TRACE ERROR";
 				break;
 		}
 		if (_config.color) SetConsoleTextAttribute(std_handle, (WORD)color::white);
 		std::cout << "] ";
-		if (msg.module()) std::cout << "[" << msg.module() << "]";
-		std::cout << "> " << msg.content() << std::endl;
+		if (msg.Module()) std::cout << "[" << msg.Module() << "]";
+		std::cout << "> " << msg.Content() << std::endl;
 #endif
 		return true;
 	}

@@ -20,4 +20,4 @@ target_link_directories(${PROJECT_NAME} PRIVATE
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE libenigma gtest gmock)
 
-add_dependencies(${PROJECT_NAME} libenigma)
+#add_dependencies(${PROJECT_NAME} libenigma)

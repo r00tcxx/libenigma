@@ -5,20 +5,22 @@
 #include "log_file.h"
 
 namespace ema::log {
-	class file_sink : public sink {
+	class FileSink : public Sink {
 	   public:
-		file_sink(file_sink_config&& config) : _config(std::move(config)) {}
-		~file_sink() {}
-		bool init() override;
-		void uninit() override;
-		bool log(const log_level lvl, const message& msg) override;
+		FileSink(FileSinkConfig&& config) : _config(std::move(config)) {
+		}
+		~FileSink() {
+		}
+		bool Init() override;
+		void Uninit() override;
+		bool Log(const LogLevel lvl, const Message& msg) override;
 
 	   private:
-		std::map<std::size_t, log_file::ptr> list_logs();
-		bool routing_logs();
+		std::map<std::size_t, LogFile::Ptr> ListLogs();
+		bool RoutingLogs();
 
 	   private:
-		file_sink_config _config;
-		log_file::ptr _file;
+		FileSinkConfig _config;
+		LogFile::Ptr _file;
 	};
 }  // namespace ema::log

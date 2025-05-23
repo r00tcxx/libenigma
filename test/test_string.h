@@ -12,48 +12,48 @@ class TestString : public testing::Test {
 };
 
 TEST_F(TestString, ContertTest) {
-	string str		  = "Hello World";
+	String str = "Hello World";
 	std::wstring wstr = str.to_wstring();
 	EXPECT_EQ(L"Hello World", wstr);
 
-	string from_wstring = string::from_wstring(wstr);
-	EXPECT_EQ("Hello World", from_wstring);
+	String fromWstring = String::from_wstring(wstr);
+	EXPECT_EQ("Hello World", fromWstring);
 }
 
 TEST_F(TestString, TrimTest) {
-	string str = "  Hello World  ";
+	String str = "  Hello World  ";
 	str.trim();
 	EXPECT_EQ("Hello World", str);
 }
 
 TEST_F(TestString, ToLowerTest) {
-	string str = "Hello World";
+	String str = "Hello World";
 	str.to_lower();
 	EXPECT_EQ("hello world", str);
 }
 
 TEST_F(TestString, ToUpperTest) {
-	string str = "Hello World";
+	String str = "Hello World";
 	str.to_upper();
 	EXPECT_EQ("HELLO WORLD", str);
 }
 
 TEST_F(TestString, ReplaceTest) {
-	string str = "Hello World";
+	String str = "Hello World";
 	str.replace("World", "Enigma");
 	EXPECT_EQ("Hello Enigma", str);
 }
 
 TEST_F(TestString, SplitTest) {
-	string str = "Hello,World,Enigma";
-	auto vec   = str.split(",");
+	String str = "Hello,World,Enigma";
+	auto vec = str.split(",");
 	EXPECT_EQ(3, vec.size());
 	EXPECT_EQ("Hello", vec[0]);
 	EXPECT_EQ("World", vec[1]);
 	EXPECT_EQ("Enigma", vec[2]);
 
-	string str2 = "Hello,World,,Enigma";
-	auto vec2	= str2.split(",", true);
+	String str2 = "Hello,World,,Enigma";
+	auto vec2 = str2.split(",", true);
 	EXPECT_EQ(4, vec2.size());
 	EXPECT_EQ("Hello", vec2[0]);
 	EXPECT_EQ("World", vec2[1]);
@@ -62,7 +62,7 @@ TEST_F(TestString, SplitTest) {
 }
 
 TEST_F(TestString, OperatorTest) {
-	string str = "Hello World";
+	String str = "Hello World";
 	EXPECT_EQ("Hello World", str);
 	EXPECT_EQ('H', str[0]);
 	str[0] = 'h';
@@ -72,8 +72,8 @@ TEST_F(TestString, OperatorTest) {
 }
 
 TEST_F(TestString, CopyTest) {
-	string str = "Hello World";
-	string str2(str);
+	String str = "Hello World";
+	String str2(str);
 	EXPECT_EQ("Hello World", str2);
 	EXPECT_EQ("Hello World", str);
 	str2 = "Enigma";
@@ -90,8 +90,8 @@ TEST_F(TestString, CopyTest) {
 }
 
 TEST_F(TestString, CompareTest) {
-	string str = "Hello World";
-	string str2 = "Hello World";
+	String str = "Hello World";
+	String str2 = "Hello World";
 	EXPECT_TRUE(str == str2);
 	EXPECT_TRUE(str == "Hello World");
 	EXPECT_TRUE(str != "Enigma");

@@ -19,23 +19,24 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#include "clock.h"
+#include <string_view>
 #include "format.h"
 #include "native/process.h"
 #include "sink.h"
+#include "time/clock.h"
 
-#define LOG_DECLARE(Level)                                                                                           \
-	template <typename... Args>                                                                                      \
-	void Level(string_view format, Args&&... args) {                                                                 \
-		auto s = vformat(format, make_format_args(args...));                                                         \
-		log_it(message(log_level::##Level, now<seconds>(), native::process::get_current_thread_id(), nullptr,        \
-					   std::move(s)));                                                                               \
-	}                                                                                                                \
-	template <typename... Args>                                                                                      \
-	void Level##_specific(const char* m, string_view format, Args&&... args) {                                       \
-		auto s = vformat(format, make_format_args(args...));                                                         \
-		log_it(                                                                                                      \
-			message(log_level::##Level, now<seconds>(), native::process::get_current_thread_id(), m, std::move(s))); \
+#define LOG_DECLARE(Level)                                                                                            \
+	template <typename... Args>                                                                                       \
+	void Level(std::string_view format, Args&&... args) {                                                             \
+		auto s = vformat(format, make_format_args(args...));                                                          \
+		LogIt(Message(LogLevel::##Level, ema::Now<Seconds>(), native::process::GetCurrentThreadID(), nullptr,         \
+					  std::move(s)));                                                                                 \
+	}                                                                                                                 \
+	template <typename... Args>                                                                                       \
+	void Level##_specific(const char* m, std::string_view format, Args&&... args) {                                   \
+		auto s = vformat(format, make_format_args(args...));                                                          \
+		LogIt(                                                                                                        \
+			Message(LogLevel::##Level, ema::Now<Seconds>(), native::process::GetCurrentThreadID(), m, std::move(s))); \
 	}
 
 #define LOG_SPECIFIC(Level)                                                \
@@ -45,37 +46,38 @@
 	}
 
 namespace ema::log {
-	bool init_logger(const log_level lvl, std::vector<sink::ptr>&& sinks);
-	void uninit_logger();
-	void log_it(message&& msg);
+	bool InitLogger(const LogLevel lvl, std::vector<Sink::Ptr>&& sinks);
+	void InitLogger();
+	void LogIt(Message&& msg);
 
-	unique_ptr<sink> make_file_sink(file_sink_config&& config);
-	unique_ptr<sink> make_console_sink(console_sink_config&& config);
+	std::unique_ptr<Sink> MakeFileSink(FileSinkConfig&& config);
+	std::unique_ptr<Sink> MakeConsoleSink(ConsoleSinkConfig&& config);
 
 	/*
 	* Since we're using the fmt library, 
 	* we don't need to worry about memory allocation issues—the fmt library handles it automatically.
 	*/
-	LOG_DECLARE(debug);
-	LOG_DECLARE(info);
-	LOG_DECLARE(warn);
-	LOG_DECLARE(error);
-	LOG_DECLARE(fatal);
-	LOG_DECLARE(trace);
-	LOG_DECLARE(trace_error);
+	LOG_DECLARE(Debug);
+	LOG_DECLARE(Info);
+	LOG_DECLARE(Warn);
+	LOG_DECLARE(Error);
+	LOG_DECLARE(Fatal);
+	LOG_DECLARE(Trace);
+	LOG_DECLARE(TraceError);
 
-	class specific_logger {
+	class SpecificLogger {
 	   public:
-		specific_logger(const char* name) : name_(name) {}
-		~specific_logger() = default;
+		SpecificLogger(const char* name) : name_(name) {
+		}
+		~SpecificLogger() = default;
 
-		LOG_SPECIFIC(debug);
-		LOG_SPECIFIC(info);
-		LOG_SPECIFIC(warn);
-		LOG_SPECIFIC(error);
-		LOG_SPECIFIC(fatal);
-		LOG_SPECIFIC(trace);
-		LOG_SPECIFIC(trace_error);
+		LOG_SPECIFIC(Debug);
+		LOG_SPECIFIC(Info);
+		LOG_SPECIFIC(Warn);
+		LOG_SPECIFIC(Error);
+		LOG_SPECIFIC(Fatal);
+		LOG_SPECIFIC(Trace);
+		LOG_SPECIFIC(TraceError);
 
 	   private:
 		const char* name_;

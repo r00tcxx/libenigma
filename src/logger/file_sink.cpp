@@ -5,66 +5,66 @@
 #include "format.h"
 
 namespace ema::log {
-	bool file_sink::init() {
+	bool FileSink::Init() {
 		if (!std::filesystem::exists((std::string)_config.log_dir) &&
 			std::filesystem::create_directories((std::string)_config.log_dir))
 			return false;
 
-		_file = std::make_unique<log_file>(_config.log_dir, _config.app_name, 0);
-		_file->open(_config.mode == file_sink_config::mode::truncate);
-		return _file->is_open();
+		_file = std::make_unique<LogFile>(_config.log_dir, _config.app_name, 0);
+		_file->Open(_config.mode == FileSinkConfig::Mode::Truncate);
+		return _file->IsOpen();
 	}
 
-	void file_sink::uninit() {
-		if (!_file || !_file->is_open()) return;
-		_file->close();
+	void FileSink::Uninit() {
+		if (!_file || !_file->IsOpen()) return;
+		_file->Close();
 	}
 
-	bool file_sink::log(const log_level lvl, const message& msg) {
-		if (!_file || !_file->is_open()) return false;
-		if (static_cast<int>(msg.level()) < static_cast<int>(lvl)) return true;
+	bool FileSink::Log(const LogLevel lvl, const Message& msg) {
+		if (!_file || !_file->IsOpen()) return false;
+		if (static_cast<int>(msg.Level()) < static_cast<int>(lvl)) return true;
 
 		std::string lvl_str;
-		switch (msg.level()) {
-			case log_level::debug:
+		switch (msg.Level()) {
+			case LogLevel::Debug:
 				lvl_str = "DEBUG";
 				break;
-			case log_level::info:
+			case LogLevel::Info:
 				lvl_str = "INFO";
 				break;
-			case log_level::warn:
+			case LogLevel::Warn:
 				lvl_str = "WARN";
 				break;
-			case log_level::error:
+			case LogLevel::Error:
 				lvl_str = "ERROR";
 				break;
-			case log_level::fatal:
+			case LogLevel::Fatal:
 				lvl_str = "FATAL";
-			case log_level::trace:
+			case LogLevel::Trace:
 				lvl_str = "TRACE";
-			case log_level::trace_error:
+			case LogLevel::TraceError:
 				lvl_str = "TRACE ERROR";
 				break;
 		}
 
-		auto timestamp = format("{:%m-%d %H:%M:%S}", localtime(msg.timestamp()));
-		string log;
-		if (msg.module()) {
-			log = format("{}.{:03} [{}] [{}] [{}]> {}", timestamp, msg.timestamp() % 1000, msg.thread(), lvl_str,
-						 msg.module(), msg.content());
+		auto timestamp = format("{:%m-%d %H:%M:%S}", localtime(msg.Timestamp()));
+		std::string log;
+		if (msg.Module()) {
+			log = format("{}.{:03} [{}] [{}] [{}]> {}", timestamp, msg.Timestamp() % 1000, msg.Thread(), lvl_str,
+						 msg.Module(), msg.Content());
 		}
 		else {
-			log = format("{}.{:03} [{}] [{}]> {}", timestamp, msg.timestamp() % 1000, msg.thread(), lvl_str,
-						 msg.content());
+			log = format("{}.{:03} [{}] [{}]> {}", timestamp, msg.Timestamp() % 1000, msg.Thread(), lvl_str,
+						 msg.Content());
 		}
-		_file->write(log);
-		if (!_config.max_file_size || _file->size() < _config.max_file_size) return true;
-		_file->close();
-		return routing_logs();
+		_file->Write(log);
+		if (!_config.max_file_size || _file->Size() < _config.max_file_size) return true;
+		_file->Close();
+		return RoutingLogs();
 	}
 
-	std::map<std::size_t, log_file::ptr> file_sink::list_logs() {
-		std::map<std::size_t, log_file::ptr> logs;
+	std::map<std::size_t, LogFile::Ptr> FileSink::ListLogs() {
+		std::map<std::size_t, LogFile::Ptr> logs;
 		const std::regex regex(format("^{}\\.(\\d+)\\.log$", _config.app_name));
 		std::filesystem::directory_iterator end;
 		for (std::filesystem::directory_iterator it((std::string)_config.log_dir); it != end; ++it) {
@@ -73,32 +73,32 @@ namespace ema::log {
 			std::smatch match;
 			if (!std::regex_match(filename, match, regex)) continue;
 			std::size_t index = std::stoll(match[1].str());
-			logs[index]		  = std::make_unique<log_file>(_config.log_dir, _config.app_name, index);
+			logs[index]		  = std::make_unique<LogFile>(_config.log_dir, _config.app_name, index);
 		}
 		return logs;
 	}
 
-	bool file_sink::routing_logs() {
+	bool FileSink::RoutingLogs() {
 		if (!_file) return false;
-		_file->close();
-		if (1 == _config.max_file_count) return _file->open(true);
+		_file->Close();
+		if (1 == _config.max_file_count) return _file->Open(true);
 
-		auto logs = list_logs();
+		auto logs = ListLogs();
 		logs.emplace(0, std::move(_file));
 		std::size_t index = logs.size();
 		for (auto it = logs.rbegin(); it != logs.rend(); ++it) {
-			log_file* log_file_ptr = it->second.get();
-			if (!log_file_ptr->rename_index(index)) return false;
+			LogFile* log_file_ptr = it->second.get();
+			if (!log_file_ptr->RenameIndex(index)) return false;
 			index--;
 		}
 		if (logs.size() < _config.max_file_count) {
-			_file = std::make_unique<log_file>(_config.log_dir, _config.app_name, 0);
-			_file->open(true);
-			return _file->is_open();
+			_file = std::make_unique<LogFile>(_config.log_dir, _config.app_name, 0);
+			_file->Open(true);
+			return _file->IsOpen();
 		}
 		_file = std::move(logs.rbegin()->second);
-		if (!_file->rename_index(0)) return false;
-		return _file->open(true);
+		if (!_file->RenameIndex(0)) return false;
+		return _file->Open(true);
 	}
 
 }  // namespace ema::log

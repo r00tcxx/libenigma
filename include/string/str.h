@@ -23,38 +23,40 @@
 #include <vector>
 
 namespace ema {
-	class string : public std::string {
+	class String : public std::string {
 	   public:
 		using std::string::string;
 		using std::string::operator=;
 		using std::string::operator+=;
 		using std::string::operator[];
-		string(const std::string& other) noexcept;
-		string(std::string&& other) noexcept;
-		string(const string& other) noexcept;
-		string(string&& other) noexcept;
-		string& operator=(const std::string&) noexcept;
-		string& operator=(std::string&&) noexcept;
-		string& operator=(const string&) noexcept;
-		string& operator=(string&&) noexcept;
-		string& operator=(const char* str) noexcept;
-		string& operator=(char* str) noexcept;
-		inline operator std::string() const noexcept { return *this; }
+		String(const std::string& other) noexcept;
+		String(std::string&& other) noexcept;
+		String(const String& other) noexcept;
+		String(String&& other) noexcept;
+		String& operator=(const std::string&) noexcept;
+		String& operator=(std::string&&) noexcept;
+		String& operator=(const String&) noexcept;
+		String& operator=(String&&) noexcept;
+		String& operator=(const char* str) noexcept;
+		String& operator=(char* str) noexcept;
+		inline operator std::string() const noexcept {
+			return *this;
+		}
 
 	   public:
-		string& to_lower();
-		string& to_upper();
+		String& to_lower();
+		String& to_upper();
 		std::wstring to_wstring() const;
 		std::string to_stdstring() const;
-		string& trim();
-		string& replace(const string& from, const string& to);
-		std::vector<string> split(const string& delimiter, bool keep_empty = false);
+		String& trim();
+		String& replace(const String& from, const String& to);
+		std::vector<String> split(const String& delimiter, bool keep_empty = false);
 
 	   public:
-		static string from_wstring(const std::wstring& wstr);
-		static string from_wstring(const wchar_t* wstr, std::size_t len);
+		static String from_wstring(const std::wstring& wstr);
+		static String from_wstring(const wchar_t* wstr, std::size_t len);
 	};
 
 	using string_view = std::string_view;
 
-}  // namespace EMA
+}  // namespace ema

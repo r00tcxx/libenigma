@@ -27,13 +27,13 @@
 #include "string/str.h"
 
 template <>
-struct std::formatter<ema::string, char> {
+struct std::formatter<ema::String, char> {
 	template <class ParseContext>
 	constexpr ParseContext::iterator parse(ParseContext& ctx) {
 		return std::ranges::find(ctx.begin(), ctx.end(), '}');
 	}
 	template <class FmtContext>
-	FmtContext::iterator format(ema::string s, FmtContext& ctx) const {
+	FmtContext::iterator format(ema::String s, FmtContext& ctx) const {
 		return std::format_to(ctx.out(), "{}", s.c_str());
 	}
 };
@@ -54,10 +54,12 @@ namespace ema {
 #include "fmt/chrono.h"
 #include "fmt/format.h"
 
-struct fmt::formatter<enigma::string> {
-	constexpr auto parse(fmt::format_parse_context& ctx) { return std::ranges::find(ctx.begin(), ctx.end(), '}'); }
+struct fmt::formatter<enigma::String> {
+	constexpr auto parse(fmt::format_parse_context& ctx) {
+		return std::ranges::find(ctx.begin(), ctx.end(), '}');
+	}
 
-	auto format(const enigma::string& p, fmt::format_context& context) {
+	auto format(const enigma::String& p, fmt::format_context& context) {
 		return fmt::format_to(context.out(), "{}", (std::string)p);
 	}
 };

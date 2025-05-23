@@ -19,19 +19,31 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#include "thread.h"
-#include "types.h"
+#include <condition_variable>
+#include <functional>
+#include <mutex>
+#include <optional>
+#include <queue>
 
 namespace ema {
 	template <typename T>
-	class sync_queue {
+		requires((std::is_move_constructible_v<T> && std::is_move_assignable_v<T>) ||
+				 (std::is_copy_constructible_v<T> && std::is_copy_assignable_v<T>))
+	class SyncQueue {
 	   public:
-		sync_queue() = default;
-		sync_queue(const sync_queue& other) { operator=(other); }
-		sync_queue(sync_queue&& other) { operator=(std::move(other)); }
-		~sync_queue() = default;
+		SyncQueue() = default;
 
-		sync_queue& operator=(const sync_queue& other) noexcept {
+		SyncQueue(const SyncQueue& other) {
+			operator=(other);
+		}
+
+		SyncQueue(SyncQueue&& other) {
+			operator=(std::move(other));
+		}
+
+		~SyncQueue() = default;
+
+		SyncQueue& operator=(const SyncQueue& other) noexcept {
 			if (this == &other) return *this;
 			queue_ = other.queue_;
 			cv_.notify_all();
@@ -39,7 +51,7 @@ namespace ema {
 			return *this;
 		}
 
-		sync_queue& operator=(sync_queue&& other) noexcept {
+		SyncQueue& operator=(SyncQueue&& other) noexcept {
 			if (this == &other) return *this;
 			queue_ = std::move(other.queue_);
 			cv_.notify_all();
@@ -48,14 +60,14 @@ namespace ema {
 		}
 
 		template <typename U>
-		void push(U&& value) {
-			lock_guard<std::mutex> lock(mutex_);
+		inline void Push(U&& value) {
+			std::lock_guard<std::mutex> lock(mutex_);
 			queue_.push(std::forward<U>(value));
 			cv_.notify_one();
 		}
 
-		optional<T> pop() {
-			unique_lock<std::mutex> lock(mutex_);
+		inline std::optional<T> Pop() {
+			std::unique_lock<std::mutex> lock(mutex_);
 			cv_.wait(lock, [this] { return !queue_.empty() || stop_source_.stop_requested(); });
 			if (stop_source_.stop_requested()) return std::nullopt;
 			T value = std::move(queue_.front());
@@ -63,8 +75,8 @@ namespace ema {
 			return value;
 		}
 
-		optional<T> pop(func<bool()>&& cond) {
-			unique_lock<std::mutex> lock(mutex_);
+		inline std::optional<T> Pop(std::function<bool()>&& cond) {
+			std::unique_lock<std::mutex> lock(mutex_);
 			cv_.wait(lock, [this, cond = move(cond)] {
 				return !queue_.empty() || stop_source_.stop_requested() || (cond ? cond() : false);
 			});
@@ -74,26 +86,26 @@ namespace ema {
 			return value;
 		}
 
-		void clear() {
-			lock_guard<std::mutex> lock(mutex_);
+		inline void Clear() {
+			std::lock_guard<std::mutex> lock(mutex_);
 			while (!queue_.empty())
 				queue_.pop();
 		}
 
-		void stop() {
+		inline void Stop() {
 			stop_source_.request_stop();
 			cv_.notify_all();
 		}
 
-		auto size() {
-			lock_guard<std::mutex> lock(mutex_);
+		inline auto Size() {
+			std::lock_guard<std::mutex> lock(mutex_);
 			return queue_.size();
 		}
 
 	   private:
-		queue<T> queue_;
-		mutex mutex_;
-		condition_variable cv_;
-		stop_source stop_source_;
+		std::queue<T> queue_;
+		std::mutex mutex_;
+		std::condition_variable cv_;
+		std::stop_source stop_source_;
 	};
-}  // namespace EMA
+}  // namespace ema

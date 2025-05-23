@@ -3,16 +3,18 @@
 #include "log/sink.h"
 
 namespace ema::log {
-	class console_sink : public sink {
+	class ConsoleSink : public Sink {
 	   public:
-		console_sink(console_sink_config&& config) : _config(std::move(config)) {}
-		~console_sink() {}
+		ConsoleSink(ConsoleSinkConfig&& config) : _config(std::move(config)) {
+		}
+		~ConsoleSink() {
+		}
 
-		bool init() override;
-		void uninit() override;
-		bool log(const log_level lvl, const message& msg) override;
+		bool Init() override;
+		void Uninit() override;
+		bool Log(const LogLevel lvl, const Message& msg) override;
 
 	   private:
-		console_sink_config _config;
+		ConsoleSinkConfig _config;
 	};
 }  // namespace ema::log

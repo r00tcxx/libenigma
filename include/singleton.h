@@ -20,16 +20,21 @@
  */
 
 #pragma once
-#include <memory>
-#include "class.h"
 
 namespace ema {
 	template <class T>
-	class singleton : public no_cmable {
+	class Singleton {
 	   public:
 		static T& instance() {
 			static T* instance = new T();
 			return *instance;
 		}
+		Singleton(const Singleton&)			   = delete;
+		Singleton(Singleton&&)				   = delete;
+		Singleton& operator=(const Singleton&) = delete;
+		Singleton& operator=(Singleton&&)	   = delete;
+
+	   protected:
+		Singleton() = default;
 	};
-}  // namespace EMA
+}  // namespace ema

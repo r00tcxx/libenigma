@@ -7,52 +7,59 @@
 #endif
 
 namespace ema {
-	string::string(const std::string& other) noexcept : std::string(other) {}
-	string::string(std::string&& other) noexcept : std::string(std::move(other)) {}
-	string::string(const string& other) noexcept : std::string(other) {}
-	string::string(string&& other) noexcept : std::string(std::move(other)) {}
+	String::String(const std::string& other) noexcept : std::string(other) {
+	}
 
-	string& string::operator=(const std::string& other) noexcept {
+	String::String(std::string&& other) noexcept : std::string(std::move(other)) {
+	}
+
+	String::String(const String& other) noexcept : std::string(other) {
+	}
+
+	String::String(String&& other) noexcept : std::string(std::move(other)) {
+	}
+
+	String& String::operator=(const std::string& other) noexcept {
 		assign(other);
 		return *this;
 	}
 
-	string& string::operator=(std::string&& other) noexcept {
+	String& String::operator=(std::string&& other) noexcept {
 		assign(std::move(other));
 		return *this;
 	}
 
-	string& string::operator=(const string& other) noexcept {
+	String& String::operator=(const String& other) noexcept {
 		assign(other);
 		return *this;
 	}
 
-	string& string::operator=(string&& other) noexcept {
+	String& String::operator=(String&& other) noexcept {
 		assign(std::move(other));
 		return *this;
 	}
 
-	string& string::operator=(const char* other) noexcept {
+	String& String::operator=(const char* other) noexcept {
 		assign(other);
 		return *this;
 	}
 
-	string& string::operator=(char* str) noexcept {
+	String& String::operator=(char* str) noexcept {
 		assign(str);
 		return *this;
 	}
 
-	string& string::to_lower() {
+	String& String::to_lower() {
 		std::transform(begin(), end(), begin(), ::tolower);
 		return *this;
 	}
 
-	string& string::to_upper() {
+	String& String::to_upper() {
 		std::transform(begin(), end(), begin(), ::toupper);
 		return *this;
 	}
 
-	std::wstring string::to_wstring() const {
+	std::wstring String::to_wstring() const {
 		if (empty()) return {};
 		auto size_need = MultiByteToWideChar(CP_UTF8, 0, c_str(), static_cast<int>(size()), nullptr, 0);
 		if (!size_need) return {};
@@ -61,11 +68,11 @@ namespace ema {
 		return wstr;
 	}
 
-	std::string string::to_stdstring() const {
+	std::string String::to_stdstring() const {
 		return *this;
 	}
 
-	string& string::trim() {
+	String& String::trim() {
 		auto is_space = [](unsigned char c) {
 			return std::isspace(c) != 0;
 		};
@@ -78,34 +85,34 @@ namespace ema {
 		return *this;
 	}
 
-	string& string::replace(const string& from, const string& to) {
+	String& String::replace(const String& from, const String& to) {
 		std::size_t start_pos = 0;
-		while ((start_pos = find(from, start_pos)) != string::npos) {
+		while ((start_pos = find(from, start_pos)) != std::string::npos) {
 			std::string::replace(start_pos, from.length(), to);
 			start_pos += to.length();
 		}
 		return *this;
 	}
 
-	std::vector<string> string::split(const string& delimiter, bool keep_empty) {
-		std::vector<string> tokens;
+	std::vector<String> String::split(const String& delimiter, bool keep_empty) {
+		std::vector<String> tokens;
 		if (empty()) return {};
 		std::size_t prev = 0, pos = 0;
 		do {
 			pos = find(delimiter, prev);
-			if (pos == string::npos) pos = length();
-			string token = substr(prev, pos - prev);
+			if (pos == std::string::npos) pos = length();
+			std::string token = substr(prev, pos - prev);
 			if (!token.empty() || keep_empty) tokens.push_back(token);
 			prev = pos + delimiter.length();
 		} while (pos < length() && prev < length());
 		return tokens;
 	}
 
-	string string::from_wstring(const std::wstring& wstr) {
+	String String::from_wstring(const std::wstring& wstr) {
 		return from_wstring(wstr.c_str(), wstr.size());
 	}
 
-	string string::from_wstring(const wchar_t* wstr, std::size_t len) {
+	String String::from_wstring(const wchar_t* wstr, std::size_t len) {
 		if (!len || !wstr) return {};
 		auto size_need = WideCharToMultiByte(CP_UTF8, 0, wstr, static_cast<int>(len), nullptr, 0, nullptr, nullptr);
 		if (size_need == 0) return {};

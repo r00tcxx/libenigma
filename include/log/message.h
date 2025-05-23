@@ -19,20 +19,28 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#include "class.h"
-#include "types.h"
+#include <memory>
+#include <string>
 
 namespace ema::log {
-	enum class log_level : int { trace, trace_error, debug, info, warn, error, fatal };
+	enum class LogLevel : int { Trace, TraceError, Debug, Info, Warn, Error, Fatal };
 
-	class message : public no_cmable {
+	class Message {
 	   public:
-		message(const log_level lvl, const u64 time, const u64 thread, const char* modlue, string&& msg) noexcept
-			: _lvl(lvl), _time(time), _thread(thread), _module(modlue), _msg(std::move(msg)) {}
-		message(message&& other) noexcept { operator=(std::move(other)); }
-		~message() = default;
+		Message(const LogLevel lvl, const std::size_t time, const std::size_t thread, const char* modlue,
+				std::string&& msg) noexcept
+			: _lvl(lvl), _time(time), _thread(thread), _module(modlue), _msg(std::move(msg)) {
+		}
 
-		message& operator=(message&& other) noexcept {
+		Message(const Message&) = delete;
+
+		Message(Message&& other) noexcept {
+			operator=(std::move(other));
+		}
+
+		~Message() = default;
+
+		Message& operator=(Message&& other) noexcept {
 			_lvl	= other._lvl;
 			_time	= other._time;
 			_thread = other._thread;
@@ -41,17 +49,29 @@ namespace ema::log {
 			return *this;
 		}
 
-		inline log_level level() const { return _lvl; }
-		inline u64 timestamp() const { return _time; }
-		inline u64 thread() const { return _thread; }
-		inline const string& content() const { return _msg; }
-		inline const char* module() const { return _module; }
+		Message& operator=(const Message&) = delete;
+
+		inline LogLevel Level() const {
+			return _lvl;
+		}
+		inline std::size_t Timestamp() const {
+			return _time;
+		}
+		inline std::size_t Thread() const {
+			return _thread;
+		}
+		inline const std::string& Content() const {
+			return _msg;
+		}
+		inline const char* Module() const {
+			return _module;
+		}
 
 	   private:
-		log_level _lvl;
+		LogLevel _lvl;
 		const char* _module;
-		u64 _time;
-		u64 _thread;
-		string _msg;
+		std::size_t _time;
+		std::size_t _thread;
+		std::string _msg;
 	};
 }  // namespace ema::log

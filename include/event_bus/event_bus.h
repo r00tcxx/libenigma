@@ -20,54 +20,55 @@
  */
 
 #pragma once
+#include <set>
 #include "event_handler.h"
 
 namespace ema {
-	class event_bus : public no_cmable {
+	class EventBus {
 	   public:
-		event_bus()	 = default;
-		~event_bus() = default;
+		EventBus()	= default;
+		~EventBus() = default;
 
-		template <detail::msg_t T>
-		bool publish(T&& msg, func<void()>&& ack_callback = nullptr) {
-			string type_name = typeid(T).name();
-			lock_guard lock(_mutex);
+		template <detail::MSGType T>
+		bool Publish(T&& msg, std::function<void()>&& ack_callback = nullptr) {
+			std::string type_name = typeid(T).name();
+			std::lock_guard lock(_mutex);
 			bool result{false};
 			for (auto& handler : _handlers) {
-				if (handler->_has_type(type_name)) {
-					handler->_deliver(detail::event{.type = type_name, .ev = msg, .ack = ack_callback});
+				if (handler->_HasType(type_name)) {
+					handler->_Deliver(detail::Event{.type = type_name, .ev = msg, .ack = ack_callback});
 					result = true;
 				}
 			}
 			return result;
 		}
 
-		bool publish(const string& type_name, any&& any, func<void()>&& ack_callback = nullptr) {
-			lock_guard lock(_mutex);
+		bool Publish(const std::string& type_name, std::any&& any, std::function<void()>&& ack_callback = nullptr) {
+			std::lock_guard lock(_mutex);
 			bool result{false};
 			for (auto& handler : _handlers) {
-				if (handler->_has_type(type_name)) {
-					handler->_deliver(detail::event{.type = type_name, .ev = move(any), .ack = ack_callback});
+				if (handler->_HasType(type_name)) {
+					handler->_Deliver(detail::Event{.type = type_name, .ev = move(any), .ack = ack_callback});
 					result = true;
 				}
 			}
 			return result;
 		}
 
-		bool subscribe(event_handler::ptr handler) {
+		bool Subscribe(EventHandler::Ptr handler) {
 			if (!handler) return false;
-			lock_guard lock(_mutex);
+			std::lock_guard lock(_mutex);
 			return _handlers.insert(handler).second;
 		}
 
-		void unsubscribe(event_handler::ptr handler) {
+		void Unsubscribe(EventHandler::Ptr handler) {
 			if (!handler) return;
-			lock_guard lock(_mutex);
+			std::lock_guard lock(_mutex);
 			_handlers.erase(handler);
 		}
 
 	   private:
-		mutex _mutex;
-		set<event_handler::ptr> _handlers;
+		std::mutex _mutex;
+		std::set<EventHandler::Ptr> _handlers;
 	};
 }  // namespace ema

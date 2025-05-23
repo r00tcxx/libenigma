@@ -1,7 +1,7 @@
 #pragma once
 #include "gtest/gtest.h"
 #include "native/process.h"
-
+#include "string/str.h"
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -13,29 +13,31 @@ using namespace ema;
 class TestProcess : public testing::Test {
    public:
    protected:
-	static void SetUpTestSuite() {}
-	static void TearDownTestSuite() {}
+	static void SetUpTestSuite() {
+	}
+	static void TearDownTestSuite() {
+	}
 };
 
 TEST_F(TestProcess, GetProcName) {
-	auto proc_name = native::process::get_proc_name();
-	EXPECT_TRUE("test.exe" == proc_name);
+	auto procName = native::process::GetProcName();
+	EXPECT_TRUE("test.exe" == procName);
 }
 
 TEST_F(TestProcess, GetProcPath) {
-	string path;
+	std::string path;
 #ifdef _WIN32
 	path.resize(MAX_PATH);
 	wchar_t buffer[MAX_PATH]{0};
 	::GetModuleFileNameW(NULL, buffer, MAX_PATH);
-	path = string::from_wstring(buffer);
-	path.replace("\\", "/");
+	auto path2 = String::from_wstring(buffer);
+	path2.replace("\\", "/");
 #endif
-	EXPECT_TRUE(path == native::process::get_proc_path());
+	EXPECT_TRUE(path2 == native::process::GetProcPath());
 }
 
 TEST_F(TestProcess, GetProcId) {
-	auto current_id = native::process::get_proc_id();
-	auto id			= native::process::get_proc_by_name("test.exe");
-	EXPECT_TRUE(id == current_id);
+	auto currentId = native::process::GetProcID();
+	auto id		   = native::process::GetProcByName("test.exe");
+	EXPECT_TRUE(id == currentId);
 }

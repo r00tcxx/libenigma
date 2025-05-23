@@ -22,28 +22,34 @@
 #include "message.h"
 
 namespace ema::log {
-	class sink : public no_cmable {
+	class Sink {
 	   public:
-		using ptr = unique_ptr<sink>;
+		using Ptr = std::unique_ptr<Sink>;
 
 	   public:
-		sink()							= default;
-		virtual ~sink()					= default;
-		virtual bool init()				= 0;
-		virtual void uninit()			= 0;
-		virtual bool log(const log_level lvl, const message& msg) = 0;
+		Sink()						 = default;
+		Sink(const Sink&)			 = delete;
+		Sink(Sink&&)				 = delete;
+		Sink& operator=(const Sink&) = delete;
+		Sink& operator=(Sink&&)		 = delete;
+
+	   public:
+		virtual ~Sink()											 = default;
+		virtual bool Init()										 = 0;
+		virtual void Uninit()									 = 0;
+		virtual bool Log(const LogLevel lvl, const Message& msg) = 0;
 	};
 
-	struct file_sink_config {
-		enum class mode { append, truncate };
-		string log_dir;
-		string app_name;
-		u64 max_file_size{0};
-		u32 max_file_count{1};
-		mode mode{mode::append};
+	struct FileSinkConfig {
+		enum class Mode { Append, Truncate };
+		std::string log_dir;
+		std::string app_name;
+		std::size_t max_file_size{0};
+		unsigned int max_file_count{1};
+		Mode mode{Mode::Append};
 	};
 
-	struct console_sink_config {
+	struct ConsoleSinkConfig {
 		bool color{true};
 	};
-}  // namespace enigma::log
+}  // namespace ema::log

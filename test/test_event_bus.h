@@ -17,73 +17,77 @@ struct TestMessage2 {
 class TestEventBus : public testing::Test {
    public:
    protected:
-	static void SetUpTestSuite() {}
-	static void TearDownTestSuite() {}
+	static void SetUpTestSuite() {
+	}
+	static void TearDownTestSuite() {
+	}
 
 	void SetUp() override {
-		bus		 = std::make_shared<event_bus>();
-		handler1 = std::make_shared<event_handler>();
-		handler2 = std::make_shared<event_handler>();
+		bus		 = std::make_shared<EventBus>();
+		handler1 = std::make_shared<EventHandler>();
+		handler2 = std::make_shared<EventHandler>();
 	}
 
 	void TearDown() override {
-		handler1->stop();
-		handler2->stop();
+		handler1->Stop();
+		handler2->Stop();
 	}
 
-	void wait_for_events() { std::this_thread::sleep_for(std::chrono::seconds(1)); }
+	void WaitForEvents() {
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
 
-	std::shared_ptr<event_bus> bus;
-	event_handler::ptr handler1;
-	event_handler::ptr handler2;
+	std::shared_ptr<EventBus> bus;
+	EventHandler::Ptr handler1;
+	EventHandler::Ptr handler2;
 };
 
 // Test subscribing handlers to the event bus
 TEST_F(TestEventBus, Subscribe) {
-	EXPECT_TRUE(bus->subscribe(handler1));
-	EXPECT_TRUE(bus->subscribe(handler2));
+	EXPECT_TRUE(bus->Subscribe(handler1));
+	EXPECT_TRUE(bus->Subscribe(handler2));
 	// Subscribe the same handler again should return false
-	EXPECT_FALSE(bus->subscribe(handler1));
+	EXPECT_FALSE(bus->Subscribe(handler1));
 
 	// Test with null handler
-	EXPECT_FALSE(bus->subscribe(nullptr));
+	EXPECT_FALSE(bus->Subscribe(nullptr));
 }
 
 // Test unsubscribing handlers from the event bus
 TEST_F(TestEventBus, Unsubscribe) {
-	EXPECT_TRUE(bus->subscribe(handler1));
-	EXPECT_TRUE(bus->subscribe(handler2));
+	EXPECT_TRUE(bus->Subscribe(handler1));
+	EXPECT_TRUE(bus->Subscribe(handler2));
 
-	bus->unsubscribe(handler1);
+	bus->Unsubscribe(handler1);
 	// Should be able to subscribe the handler again after unsubscribing
-	EXPECT_TRUE(bus->subscribe(handler1));
+	EXPECT_TRUE(bus->Subscribe(handler1));
 
 	// Unsubscribe with null handler should not crash
-	bus->unsubscribe(nullptr);
+	bus->Unsubscribe(nullptr);
 }
 
 // Test handler's start and stop functionality
 TEST_F(TestEventBus, HandlerStartStop) {
-	ASSERT_FALSE(handler1->is_start());
-	handler1->start();
-	EXPECT_TRUE(handler1->is_start());
+	ASSERT_FALSE(handler1->IsStart());
+	handler1->Start();
+	EXPECT_TRUE(handler1->IsStart());
 
 	// Starting an already started handler should not change its state
-	handler1->start();
-	EXPECT_TRUE(handler1->is_start());
+	handler1->Start();
+	EXPECT_TRUE(handler1->IsStart());
 
-	handler1->stop();
-	EXPECT_FALSE(handler1->is_start());
+	handler1->Stop();
+	EXPECT_FALSE(handler1->IsStart());
 
 	// Stopping an already stopped handler should not change its state
-	handler1->stop();
-	EXPECT_FALSE(handler1->is_start());
+	handler1->Stop();
+	EXPECT_FALSE(handler1->IsStart());
 }
 
 // Test publishing messages with no subscribers
 TEST_F(TestEventBus, PublishWithNoSubscribers) {
 	TestMessage1 msg{42, "test"};
-	EXPECT_FALSE(bus->publish(msg));
+	EXPECT_FALSE(bus->Publish(msg));
 }
 
 // Test basic message publishing and handling
@@ -91,42 +95,42 @@ TEST_F(TestEventBus, BasicPublishAndHandle) {
 	bool received = false;
 	TestMessage1 original{42, "test"};
 
-	handler1->start();
-	handler1->on<TestMessage1>([&received, &original](const TestMessage1& msg) {
+	handler1->Start();
+	handler1->On<TestMessage1>([&received, &original](const TestMessage1& msg) {
 		received = true;
 		EXPECT_EQ(msg.value, original.value);
 		EXPECT_EQ(msg.text, original.text);
 	});
 
-	EXPECT_TRUE(bus->subscribe(handler1));
-	EXPECT_TRUE(bus->publish(original));
+	EXPECT_TRUE(bus->Subscribe(handler1));
+	EXPECT_TRUE(bus->Publish(original));
 
 	// Give some time for the message to be processed
-	wait_for_events();
+	WaitForEvents();
 	EXPECT_TRUE(received);
 }
 
 // Test multiple handlers receiving the same message
 TEST_F(TestEventBus, MultipleHandlers) {
-	int handler1_count = 0;
-	int handler2_count = 0;
+	int handler1Count = 0;
+	int handler2Count = 0;
 	TestMessage1 msg{42, "test"};
 
-	handler1->start();
-	handler2->start();
+	handler1->Start();
+	handler2->Start();
 
-	handler1->on<TestMessage1>([&handler1_count](const TestMessage1&) { handler1_count++; });
+	handler1->On<TestMessage1>([&handler1Count](const TestMessage1&) { handler1Count++; });
 
-	handler2->on<TestMessage1>([&handler2_count](const TestMessage1&) { handler2_count++; });
+	handler2->On<TestMessage1>([&handler2Count](const TestMessage1&) { handler2Count++; });
 
-	EXPECT_TRUE(bus->subscribe(handler1));
-	EXPECT_TRUE(bus->subscribe(handler2));
-	EXPECT_TRUE(bus->publish(msg));
+	EXPECT_TRUE(bus->Subscribe(handler1));
+	EXPECT_TRUE(bus->Subscribe(handler2));
+	EXPECT_TRUE(bus->Publish(msg));
 
 	// Give some time for the message to be processed
-	wait_for_events();
-	EXPECT_EQ(handler1_count, 1);
-	EXPECT_EQ(handler2_count, 1);
+	WaitForEvents();
+	EXPECT_EQ(handler1Count, 1);
+	EXPECT_EQ(handler2Count, 1);
 }
 
 // Test different message types
@@ -136,39 +140,39 @@ TEST_F(TestEventBus, DifferentMessageTypes) {
 	TestMessage1 msg1{42, "test"};
 	TestMessage2 msg2{3.14};
 
-	handler1->start();
+	handler1->Start();
 
-	handler1->on<TestMessage1>([&received1](const TestMessage1&) { received1 = true; });
+	handler1->On<TestMessage1>([&received1](const TestMessage1&) { received1 = true; });
 
-	handler1->on<TestMessage2>([&received2](const TestMessage2&) { received2 = true; });
+	handler1->On<TestMessage2>([&received2](const TestMessage2&) { received2 = true; });
 
-	EXPECT_TRUE(bus->subscribe(handler1));
-	EXPECT_TRUE(bus->publish(msg1));
-	EXPECT_TRUE(bus->publish(msg2));
+	EXPECT_TRUE(bus->Subscribe(handler1));
+	EXPECT_TRUE(bus->Publish(msg1));
+	EXPECT_TRUE(bus->Publish(msg2));
 
 	// Give some time for the messages to be processed
-	wait_for_events();
+	WaitForEvents();
 	EXPECT_TRUE(received1);
 	EXPECT_TRUE(received2);
 }
 
 // Test acknowledgment callback
 TEST_F(TestEventBus, AcknowledgmentCallback) {
-	bool message_handled = false;
-	bool ack_called		 = false;
+	bool messageHandled = false;
+	bool ackCalled = false;
 	TestMessage1 msg{42, "test"};
 
-	handler1->start();
+	handler1->Start();
 
-	handler1->on<TestMessage1>([&message_handled](const TestMessage1&) { message_handled = true; });
+	handler1->On<TestMessage1>([&messageHandled](const TestMessage1&) { messageHandled = true; });
 
-	EXPECT_TRUE(bus->subscribe(handler1));
-	EXPECT_TRUE(bus->publish(msg, [&ack_called]() { ack_called = true; }));
+	EXPECT_TRUE(bus->Subscribe(handler1));
+	EXPECT_TRUE(bus->Publish(msg, [&ackCalled]() { ackCalled = true; }));
 
 	// Give some time for the message to be processed
-	wait_for_events();
-	EXPECT_TRUE(message_handled);
-	EXPECT_TRUE(ack_called);
+	WaitForEvents();
+	EXPECT_TRUE(messageHandled);
+	EXPECT_TRUE(ackCalled);
 }
 
 // Test canceling a specific message type subscription
@@ -178,28 +182,28 @@ TEST_F(TestEventBus, CancelSubscription) {
 	TestMessage1 msg1{42, "test"};
 	TestMessage2 msg2{3.14};
 
-	handler1->start();
+	handler1->Start();
 
-	handler1->on<TestMessage1>([&count1](const TestMessage1&) { count1++; });
+	handler1->On<TestMessage1>([&count1](const TestMessage1&) { count1++; });
 
-	handler1->on<TestMessage2>([&count2](const TestMessage2&) { count2++; });
+	handler1->On<TestMessage2>([&count2](const TestMessage2&) { count2++; });
 
-	EXPECT_TRUE(bus->subscribe(handler1));
+	EXPECT_TRUE(bus->Subscribe(handler1));
 
 	// First verify both messages are received
-	EXPECT_TRUE(bus->publish(msg1));
-	EXPECT_TRUE(bus->publish(msg2));
-	wait_for_events();
+	EXPECT_TRUE(bus->Publish(msg1));
+	EXPECT_TRUE(bus->Publish(msg2));
+	WaitForEvents();
 	EXPECT_EQ(count1, 1);
 	EXPECT_EQ(count2, 1);
 
 	// Now cancel TestMessage1 subscription
-	handler1->cancel<TestMessage1>();
+	handler1->Cancel<TestMessage1>();
 
 	// Publish again
-	EXPECT_FALSE(bus->publish(msg1));  // Should return false since no handlers for this type
-	EXPECT_TRUE(bus->publish(msg2));
-	wait_for_events();
+	EXPECT_FALSE(bus->Publish(msg1));  // Should return false since no handlers for this type
+	EXPECT_TRUE(bus->Publish(msg2));
+	WaitForEvents();
 
 	// count1 should still be 1, count2 should be 2
 	EXPECT_EQ(count1, 1);

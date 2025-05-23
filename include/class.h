@@ -20,32 +20,33 @@
  */
 #pragma once
 namespace ema {
-	class no_moveable {
+	class NoMoveable {
 	   protected:
-		no_moveable() {}
-		virtual ~no_moveable() = default;
+		NoMoveable() {
+		}
+		virtual ~NoMoveable() = default;
 
-		no_moveable(no_moveable&&)			  = delete;
-		no_moveable& operator=(no_moveable&&) = delete;
+		NoMoveable(NoMoveable&&)			= delete;
+		NoMoveable& operator=(NoMoveable&&) = delete;
 	};
 
-	class no_copyable {
+	class NoCopyable {
 	   protected:
-		no_copyable()		   = default;
-		virtual ~no_copyable() = default;
+		NoCopyable()		  = default;
+		virtual ~NoCopyable() = default;
 
-		no_copyable(const no_copyable&)		 = delete;
-		no_copyable& operator=(no_copyable&) = delete;
+		NoCopyable(const NoCopyable&)	   = delete;
+		NoCopyable& operator=(NoCopyable&) = delete;
 	};
 
-	class no_cmable : public no_copyable, public no_moveable {
+	class NoCopyableMoveable : public NoCopyable, public NoMoveable {
 	   protected:
-		no_cmable()			 = default;
-		virtual ~no_cmable() = default;
+		NoCopyableMoveable()		  = default;
+		virtual ~NoCopyableMoveable() = default;
 	};
 
-	class no_constructiable {
+	class NoConstructible {
 	   private:
-		no_constructiable() = delete;
+		NoConstructible() = delete;
 	};
-}  // namespace EMA
+}  // namespace ema

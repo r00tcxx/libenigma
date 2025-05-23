@@ -19,33 +19,37 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#include <atomic>
-#include <condition_variable>
-#include <memory>
-#include <mutex>
-#include <shared_mutex>
-#include <stop_token>
-#include <thread>
+#include <chrono>
 
 namespace ema {
-	using thread			 = std::thread;
-	using jthread			 = std::jthread;
-	using stop_source		 = std::stop_source;
-	using stop_token		 = std::stop_token;
-	using condition_variable = std::condition_variable;
-	using mutex				 = std::mutex;
-	using shared_mutex		 = std::shared_mutex;
-	using atomic_bool		 = std::atomic_bool;
-	using atomic_u32		 = std::atomic_uint32_t;
-	using atomic_u64		 = std::atomic_uint64_t;
+	using Microseconds = std::chrono::microseconds;
+	using Milliseconds = std::chrono::milliseconds;
+	using Seconds	   = std::chrono::seconds;
+	using Mins		   = std::chrono::minutes;
+	using Houers	   = std::chrono::hours;
 
 	template <typename T>
-	using atomic_shared_ptr = std::atomic<std::shared_ptr<T>>;
+	inline std::size_t Now() {
+		return std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch()).count();
+	}
 
-	template <typename T>
-	using unique_lock = std::unique_lock<T>;
+	class Clock {
+	   public:
+		Clock() {
+		}
 
-	template <typename T>
-	using lock_guard = std::lock_guard<T>;
+		~Clock() {
+		}
 
+		inline void Begin() {
+			_start_time = std::chrono::system_clock::now();
+		}
+		inline std::size_t End() {
+			auto end_time = std::chrono::system_clock::now();
+			return std::chrono::duration_cast<std::chrono::milliseconds>(end_time - _start_time).count();
+		}
+
+	   private:
+		std::chrono::time_point<std::chrono::system_clock> _start_time;
+	};
 }  // namespace ema
