@@ -4,15 +4,15 @@
 
 namespace ema::log {
 	bool InitLogger(const LogLevel lvl, std::vector<Sink::Ptr>&& sinks) {
-		return Logger::instance().Init(lvl, std::move(sinks));
+		return Logger::Instance().Init(lvl, std::move(sinks));
 	}
 
-	void InitLogger() {
-		Logger::instance().Uninit();
+	void UninitLogger() {
+		Logger::Instance().Uninit();
 	}
 
 	void LogIt(Message&& msg) {
-		Logger::instance().LogIt(std::move(msg));
+		Logger::Instance().LogIt(std::move(msg));
 	}
 
 	std::unique_ptr<Sink> MakeFileSink(FileSinkConfig&& config) {

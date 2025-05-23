@@ -20,25 +20,26 @@
  */
 #pragma once
 #include <future>
-#include "../sync_queue.h"
-#include "../types.h"
+#include <random>
+#include "class.h"
+#include "container/sync_queue.h"
 
 namespace ema {
 	namespace detail {
-		struct task {
-			func<void()> function;
+		struct Task {
+			std::function<void()> function;
 		};
 
-		class worker : public no_cmable {
+		class Worker : public NoCopyableMoveable {
 		   public:
-			using ptr = unique_ptr<worker>;
+			using Ptr = std::unique_ptr<Worker>;
 
 		   public:
-			worker(stop_token stop_token, atomic_u64& counter) : _counter(counter) {
-				_thread = thread([this, stop_token]() {
+			Worker(std::stop_token stop_token, std::atomic<std::size_t>& counter) : _counter(counter) {
+				_thread = std::thread([this, stop_token]() {
 					while (!stop_token.stop_requested()) {
 						_busy		  = false;
-						auto task_opt = _tasks.pop([&] { return stop_token.stop_requested(); });
+						auto task_opt = _tasks.Pop([&] { return stop_token.stop_requested(); });
 						_busy		  = true;
 						if (!task_opt.has_value()) continue;
 						auto& task = task_opt.value();
@@ -48,52 +49,53 @@ namespace ema {
 				});
 			}
 
-			~worker() {
-				_tasks.clear();
-				_tasks.stop();
+			~Worker() {
+				_tasks.Clear();
+				_tasks.Stop();
 				if (_thread.joinable()) _thread.join();
 			}
 
-			inline bool is_busy() const {
+			inline bool IsBusyt() const {
 				return _busy;
 			}
-			inline auto get_task_count() {
-				return _tasks.size();
+			inline auto GetTaskCount() {
+				return _tasks.Size();
 			}
-			inline void push_task(task&& task) {
+			inline void push_task(Task&& task) {
 				_counter++;
-				_tasks.push(move(task));
+				_tasks.Push(std::move(task));
 			}
 
 		   private:
-			thread _thread;
-			atomic_bool _busy{false};
-			atomic_u64& _counter;
-			sync_queue<task> _tasks;
+			std::thread _thread;
+			std::atomic_bool _busy{false};
+			std::atomic<std::size_t>& _counter;
+			SyncQueue<Task> _tasks;
 		};
 
 	}  // namespace detail
 
-	class thread_pool {
+	class ThreadPool {
 	   public:
-		thread_pool() = default;
-		~thread_pool() {
-			shutdown();
+		ThreadPool() = default;
+		~ThreadPool() {
+			Shutdown();
 		}
 
-		void startup(const u64 thread_count, const u64 max_task_count, const bool allow_expand = true) {
+		void Startup(const u64 thread_count, const u64 max_task_count, const bool allow_expand = true) {
 			if (_start) return;
 			_max_task_count			= !max_task_count ? 999 : max_task_count;
 			_allow_expand			= allow_expand;
 			const auto create_count = !thread_count ? 1 : thread_count;
 
-			lock_guard lock(_worker_mtx);
+			std::lock_guard lock(_worker_mtx);
 			for (u64 i = 0; i < create_count; ++i)
-				_workers.emplace_back(move(make_unique<detail::worker>(_stop_source.get_token(), _curr_task_count)));
+				_workers.emplace_back(
+					std::move(std::make_unique<detail::Worker>(_stop_source.get_token(), _curr_task_count)));
 			_start = true;
 		}
 
-		void shutdown() {
+		void Shutdown() {
 			if (!_start) return;
 			_stop_source.request_stop();
 			//wait worker's thread join finished
@@ -102,35 +104,40 @@ namespace ema {
 		}
 
 		template <typename Func, typename... Args>
-		bool submit(Func&& func, Args&&... args) {
+		bool Submit(Func&& func, Args&&... args) {
 			if (!_start) return false;
 
-			detail::task task;
+			detail::Task task;
 			task.function = [f = std::forward<Func>(func), ... args_captured = std::forward<Args>(args)]() mutable {
 				try {
 					f(args_captured...);
 				} catch (...) {}
 			};
 
-			lock_guard lock(_worker_mtx);
+			std::lock_guard lock(_worker_mtx);
 			if (_curr_task_count > _max_task_count) return false;
 
 			for (auto& worker : _workers) {
 				if (!worker->is_busy()) {
-					worker->push_task(move(task));
+					worker->push_task(std::move(task));
 					return true;
 				}
 			}
 			//no worker's idle
-			const auto max_thread_count = thread::hardware_concurrency() * 2;
+			const auto max_thread_count = std::thread::hardware_concurrency() * 2;
 			if (!_allow_expand || _workers.size() + 1 > max_thread_count) {
 				//cant create worker anymore, routuer task to randmon worker
-				_workers.at(random<u64>(0, _workers.size() - 1))->push_task(move(task));
+				constexpr auto random = [](auto from, auto to) -> std::size_t {
+					std::random_device rd;
+					std::mt19937 gen(rd());
+					return std::uniform_int_distribution<std::size_t>(from, to)(gen);
+				};
+				_workers.at(random(0, _workers.size() - 1))->push_task(std::move(task));
 			}
 			else {
-				auto new_worker = make_unique<detail::worker>(_stop_source.get_token(), _curr_task_count);
-				new_worker->push_task(move(task));
-				_workers.emplace_back(move(new_worker));
+				auto new_worker = make_unique<detail::Worker>(_stop_source.get_token(), _curr_task_count);
+				new_worker->push_task(std::move(task));
+				_workers.emplace_back(std::move(new_worker));
 			}
 			return true;
 		}
@@ -156,25 +163,25 @@ namespace ema {
 				}
 			};
 
-			if (!submit(move(task)))
+			if (!Submit(std::move(task)))
 				promise_ptr->set_exception(std::make_exception_ptr(std::runtime_error("submit task failed")));
 			return future_result;
 		}
 
-		inline u64 get_curr_task_count() const {
+		inline std::size_t GetCurrentTaskCount() const {
 			return _curr_task_count;
 		}
-		inline u64 get_max_task_count() const {
+		inline std::size_t GetMaxTaskCount() const {
 			return _max_task_count;
 		}
 
 	   private:
-		atomic_bool _allow_expand{true};
-		atomic_bool _start{false};
-		atomic_u64 _curr_task_count{0};
-		atomic_u64 _max_task_count{0};
-		mutex _worker_mtx;
-		vector<detail::worker::ptr> _workers;
-		stop_source _stop_source;
+		std::atomic_bool _allow_expand{true};
+		std::atomic_bool _start{false};
+		std::atomic<std::size_t> _curr_task_count{0};
+		std::atomic<std::size_t> _max_task_count{0};
+		std::mutex _worker_mtx;
+		std::vector<detail::Worker::Ptr> _workers;
+		std::stop_source _stop_source;
 	};
 }  // namespace ema

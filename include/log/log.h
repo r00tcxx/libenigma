@@ -47,7 +47,7 @@
 
 namespace ema::log {
 	bool InitLogger(const LogLevel lvl, std::vector<Sink::Ptr>&& sinks);
-	void InitLogger();
+	void UninitLogger();
 	void LogIt(Message&& msg);
 
 	std::unique_ptr<Sink> MakeFileSink(FileSinkConfig&& config);
