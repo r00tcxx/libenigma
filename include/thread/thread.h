@@ -23,6 +23,7 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <shared_mutex>
 #include <thread>
 #include <type_traits>
@@ -74,6 +75,8 @@ namespace ema {
 			static constexpr bool _void_fail	= std::is_void_v<F>;
 			using SuccessFunc					= typename _FuncSelector<_void_success, S>::Type;
 			using FailFunc						= typename _FuncSelector<_void_fail, F>::Type;
+			using SuccessValue					= std::conditional_t<_void_success, std::monostate, std::optional<S>>;
+			using FailValue						= std::conditional_t<_void_fail, std::monostate, std::optional<F>>;
 
 		   public:
 			_SharedPromiseState()									   = default;
@@ -85,56 +88,84 @@ namespace ema {
 
 			inline void SetFailFunc(FailFunc&& v) {
 				if (!v) return;
-				_f_func.store(std::make_shared<FailFunc>(std::move(v)));
+				std::lock_guard lock(_mutex);
+				if (_is_finished && !_is_successed) {
+					if constexpr (_void_fail) v();
+					else if (_fail_value.has_value()) v(std::move(_fail_value.value()));
+				}
+				else {
+					_f_func = std::make_shared<FailFunc>(std::move(v));
+				}
 			}
 
 			inline void SetSuccessFunc(SuccessFunc&& v) {
 				if (!v) return;
-				_s_func.store(std::make_shared<SuccessFunc>(std::move(v)));
+				std::lock_guard lock(_mutex);
+				if (_is_finished && _is_successed) {
+					if constexpr (_void_success) v();
+					else if (_success_value.has_value()) v(std::move(_success_value.value()));
+				}
+				else {
+					_s_func = std::make_shared<SuccessFunc>(std::move(v));
+				}
 			}
 
 			template <typename... Args>
 			inline void SetFailed(Args&&... args) {
+				std::lock_guard lock(_mutex);
+				if (_is_finished) return;
+
+				_is_finished  = true;
+				_is_successed = false;
+
 				if constexpr (_void_fail) {
 					static_assert(sizeof...(args) == 0, "bad argument");
-					_is_finished = true;
-					if (auto f = _f_func.load()) (*f)();
+					if (_f_func) (*_f_func)();
 				}
 				else {
 					static_assert(sizeof...(args) == 1, "bad argument");
-					_is_finished = true;
-					if (auto f = _f_func.load()) (*f)(std::forward<Args>(args)...);
+					_fail_value = F(std::forward<Args>(args)...);
+					if (_f_func) (*_f_func)(std::move(_fail_value.value()));
 				}
 			}
 
 			template <typename... Args>
 			inline void SetSuccessed(Args&&... args) {
+				std::lock_guard lock(_mutex);
+				if (_is_finished) return;
+
+				_is_finished  = true;
+				_is_successed = true;
+
 				if constexpr (_void_success) {
 					static_assert(sizeof...(args) == 0, "bad argument");
-					_is_finished  = true;
-					_is_successed = true;
-					if (auto f = _s_func.load()) (*f)();
+					if (_s_func) (*_s_func)();
 				}
 				else {
 					static_assert(sizeof...(args) == 1, "bad argument");
-					_is_finished  = true;
-					_is_successed = true;
-					if (auto f = _s_func.load()) (*f)(std::forward<Args>(args)...);
+					_success_value = S(std::forward<Args>(args)...);
+					if (_s_func) (*_s_func)(std::move(_success_value.value()));
 				}
 			}
 
 			inline bool IsFinished() {
-				return _is_finished.load();
+				std::lock_guard lock(_mutex);
+				return _is_finished;
 			}
 
 			inline bool IsSuccessed() {
-				return _is_successed.load();
+				std::lock_guard lock(_mutex);
+				return _is_finished && _is_successed;
 			}
 
 		   private:
-			std::atomic_bool _is_finished{false}, _is_successed{false};
-			std::atomic<std::shared_ptr<SuccessFunc>> _s_func;
-			std::atomic<std::shared_ptr<FailFunc>> _f_func;
+			mutable std::mutex _mutex;
+			bool _is_finished{false};
+			bool _is_successed{false};
+			std::shared_ptr<SuccessFunc> _s_func;
+			std::shared_ptr<FailFunc> _f_func;
+			SuccessValue _success_value;
+			FailValue _fail_value;
 		};
 
 	}  // namespace detail
@@ -225,7 +256,7 @@ namespace ema {
 		Promise(const Promise&) = delete;
 
 		Promise(Promise&& other) {
-			_state.stroe(other._state.load());
+			_state.store(other._state.load());
 			other._state.store(nullptr);
 		}
 
@@ -234,7 +265,7 @@ namespace ema {
 
 		inline Promise& operator=(const Promise&) = delete;
 		inline Promise& operator=(Promise&& other) {
-			_state.stroe(other._state.load());
+			_state.store(other._state.load());
 			other._state.store(nullptr);
 			return *this;
 		}

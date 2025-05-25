@@ -26,8 +26,46 @@
 
 namespace ema {
 	namespace detail {
+		class CallableBase {
+		   public:
+			virtual ~CallableBase() = default;
+			virtual void invoke()	= 0;
+		};
+
+		template <typename F, typename... Args>
+		class CallableImpl : public CallableBase {
+			F func;
+			std::tuple<Args...> args;
+
+		   public:
+			CallableImpl(F&& f, Args&&... a) : func(std::forward<F>(f)), args(std::forward<Args>(a)...) {
+			}
+
+			void invoke() override {
+				std::apply(std::move(func), std::move(args));
+			}
+		};
+
 		struct Task {
-			std::function<void()> function;
+			std::unique_ptr<CallableBase> callable;
+
+			Task()						 = default;
+			Task(const Task&)			 = delete;
+			Task& operator=(const Task&) = delete;
+			Task(Task&&)				 = default;
+			Task& operator=(Task&&)		 = default;
+
+			template <typename F, typename... Args>
+			static Task Create(F&& func, Args&&... args) {
+				Task task;
+				task.callable = std::make_unique<CallableImpl<std::decay_t<F>, std::decay_t<Args>...>>(
+					std::forward<F>(func), std::forward<Args>(args)...);
+				return task;
+			}
+
+			void operator()() {
+				if (callable) callable->invoke();
+			}
 		};
 
 		class Worker : public NoCopyableMoveable {
@@ -43,7 +81,7 @@ namespace ema {
 						_busy		  = true;
 						if (!task_opt.has_value()) continue;
 						auto& task = task_opt.value();
-						if (task.function) task.function();
+						task();
 						_counter--;
 					}
 				});
@@ -55,7 +93,7 @@ namespace ema {
 				if (_thread.joinable()) _thread.join();
 			}
 
-			inline bool IsBusyt() const {
+			inline bool IsBusy() const {
 				return _busy;
 			}
 			inline auto GetTaskCount() {
@@ -82,7 +120,7 @@ namespace ema {
 			Shutdown();
 		}
 
-		void Startup(const u64 thread_count, const u64 max_task_count, const bool allow_expand = true) {
+		inline void Startup(const u64 thread_count, const u64 max_task_count, const bool allow_expand = true) {
 			if (_start) return;
 			_max_task_count			= !max_task_count ? 999 : max_task_count;
 			_allow_expand			= allow_expand;
@@ -95,7 +133,7 @@ namespace ema {
 			_start = true;
 		}
 
-		void Shutdown() {
+		inline void Shutdown() {
 			if (!_start) return;
 			_stop_source.request_stop();
 			//wait worker's thread join finished
@@ -104,21 +142,16 @@ namespace ema {
 		}
 
 		template <typename Func, typename... Args>
-		bool Submit(Func&& func, Args&&... args) {
+		inline bool Submit(Func&& func, Args&&... args) {
 			if (!_start) return false;
 
-			detail::Task task;
-			task.function = [f = std::forward<Func>(func), ... args_captured = std::forward<Args>(args)]() mutable {
-				try {
-					f(args_captured...);
-				} catch (...) {}
-			};
+			auto task = detail::Task::Create(std::forward<Func>(func), std::forward<Args>(args)...);
 
 			std::lock_guard lock(_worker_mtx);
 			if (_curr_task_count > _max_task_count) return false;
 
 			for (auto& worker : _workers) {
-				if (!worker->is_busy()) {
+				if (!worker->IsBusy()) {
 					worker->push_task(std::move(task));
 					return true;
 				}
@@ -143,7 +176,7 @@ namespace ema {
 		}
 
 		template <typename Func, typename... Args>
-		auto exec(Func&& func, Args&&... args) -> std::future<std::invoke_result_t<Func, Args...>> {
+		inline auto exec(Func&& func, Args&&... args) -> std::future<std::invoke_result_t<Func, Args...>> {
 			using return_type  = std::invoke_result_t<Func, Args...>;
 			auto promise_ptr   = std::make_shared<std::promise<return_type>>();
 			auto future_result = promise_ptr->get_future();
@@ -156,7 +189,7 @@ namespace ema {
 						promise_ptr->set_value();
 					}
 					else {
-						promise_ptr->set_value(f(args_captured...));
+						promise_ptr->set_value(f(std::forward<Args>(args_captured)...));
 					}
 				} catch (...) {
 					promise_ptr->set_exception(std::current_exception());
